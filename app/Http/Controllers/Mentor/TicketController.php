@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\TicketMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Helpers\NotificationHelper;
 
 class TicketController extends Controller
 {
@@ -16,7 +17,6 @@ class TicketController extends Controller
     {
         $query = Ticket::where('mentor_id', auth()->id())->with('category');
 
-        // Search engine
         if ($request->filled('q')) {
             $search = $request->q;
             $query->where(function ($q) use ($search) {
@@ -26,7 +26,6 @@ class TicketController extends Controller
             });
         }
 
-        // Tab filter
         if ($request->filled('status') && $request->status !== 'semua') {
             $statusMap = [
                 'baru' => 'Baru',
@@ -40,7 +39,6 @@ class TicketController extends Controller
 
         $tickets = $query->orderBy('created_at', 'desc')->get();
 
-        // Count per status (untuk tab)
         $counts = [
             'semua' => Ticket::where('mentor_id', auth()->id())->count(),
             'baru' => Ticket::where('mentor_id', auth()->id())->where('status', 'Baru')->count(),
@@ -80,7 +78,6 @@ class TicketController extends Controller
             return redirect()->route('mentor.tickets.create')->withErrors($validator)->withInput();
         }
 
-        // Generate ticket_number yang aman (pakai max id)
         $lastId = Ticket::max('id') ?? 0;
         $ticketNumber = 'TK-' . str_pad($lastId + 1, 3, '0', STR_PAD_LEFT);
 
@@ -119,7 +116,6 @@ class TicketController extends Controller
     {
         $ticket = Ticket::where('mentor_id', auth()->id())->findOrFail($id);
 
-        // Cegah kirim pesan kalau tiket sudah ditutup
         if ($ticket->status === 'Ditutup') {
             return back()->with('error', 'Tiket sudah ditutup, tidak bisa mengirim pesan.');
         }
@@ -145,6 +141,18 @@ class TicketController extends Controller
             'attachment' => $attachmentPath,
         ]);
 
+        // 📬 NOTIFIKASI KE IT SUPPORT
+        if ($ticket->it_support_id) {
+            NotificationHelper::send(
+                $ticket->it_support_id,
+                $ticket->id,
+                auth()->id(),
+                'message',
+                'Pesan Baru dari Mentor',
+                auth()->user()->name . ' mengirim pesan pada tiket #' . $ticket->ticket_number
+            );
+        }
+
         return back()->with('success', 'Pesan berhasil dikirim.');
     }
 
@@ -153,7 +161,6 @@ class TicketController extends Controller
     {
         $ticket = Ticket::where('mentor_id', auth()->id())->findOrFail($id);
 
-        // Hanya bisa konfirmasi kalau status sudah Selesai
         if ($ticket->status !== 'Selesai') {
             return back()->with('error', 'Tiket belum bisa dikonfirmasi. Tunggu IT Support menandai selesai.');
         }
@@ -162,6 +169,18 @@ class TicketController extends Controller
             'status' => 'Ditutup',
             'resolved_at' => now(),
         ]);
+
+        // 📬 NOTIFIKASI KE IT SUPPORT
+        if ($ticket->it_support_id) {
+            NotificationHelper::send(
+                $ticket->it_support_id,
+                $ticket->id,
+                auth()->id(),
+                'closed',
+                'Tiket Dikonfirmasi Selesai',
+                'Tiket #' . $ticket->ticket_number . ' telah dikonfirmasi selesai oleh Mentor.'
+            );
+        }
 
         return back()->with('success', 'Tiket berhasil dikonfirmasi selesai.');
     }

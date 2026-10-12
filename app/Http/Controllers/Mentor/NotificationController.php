@@ -3,18 +3,24 @@
 namespace App\Http\Controllers\Mentor;
 
 use App\Http\Controllers\Controller;
-use App\Models\Ticket;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Notification;
 
 class NotificationController extends Controller
 {
     public function index()
     {
-        $notifications = Ticket::where('mentor_id', Auth::id())
-            ->whereIn('status', ['Diproses', 'Selesai', 'Ditutup'])
-            ->with('category')
-            ->orderBy('updated_at', 'desc')
+        $userId = auth()->id();
+
+        // Ambil notifikasi untuk user ini
+        $notifications = Notification::where('user_id', $userId)
+            ->with(['ticket', 'sender'])
+            ->orderBy('created_at', 'desc')
             ->get();
+
+        // ⭐ MARK AS READ: tandai semua sebagai sudah dibaca
+        Notification::where('user_id', $userId)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
 
         return view('mentor.notifications.index', compact('notifications'));
     }
