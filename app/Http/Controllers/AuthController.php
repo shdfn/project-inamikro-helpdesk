@@ -15,12 +15,12 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        // Validasi: boleh email ATAU username
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
+            'login' => 'required',
             'password' => 'required',
         ], [
-            'email.required' => 'Email Wajib Diisi.',
-            'email.email' => 'Format Email Tidak Valid.',
+            'login.required' => 'Email / Username Wajib Diisi.',
             'password.required' => 'Kata Sandi Wajib Diisi.',
         ]);
 
@@ -28,12 +28,20 @@ class AuthController extends Controller
             return redirect('login')->withErrors($validator)->withInput();
         }
 
-        $credentials = $request->only('email', 'password');
+        $loginInput = $request->input('login');
+        $password = $request->input('password');
 
-        if (Auth::attempt($credentials)) {
+        // Tentukan apakah input berupa email atau username
+        $field = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
+        $credentials = [
+            $field => $loginInput,
+            'password' => $password,
+        ];
+
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
-            // Redirect berdasarkan role
             return match (auth()->user()->role) {
                 'mentor' => redirect()->route('mentor.dashboard'),
                 'it_support' => redirect()->route('it.dashboard'),
@@ -42,7 +50,9 @@ class AuthController extends Controller
             };
         }
 
-        return redirect('login')->withErrors(['email' => 'Email atau Kata Sandi salah.'])->withInput();
+        return redirect('login')
+            ->withErrors(['login' => 'Email/Username atau Kata Sandi salah.'])
+            ->withInput();
     }
 
     public function logout(Request $request)
