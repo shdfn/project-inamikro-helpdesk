@@ -1,12 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-<<<<<<< HEAD
 
 Route::get('/', function () {
     return view('welcome');
 });
-=======
+
 use App\Http\Controllers\AuthController;
 
 // Mentor Controllers
@@ -59,4 +58,4 @@ Route::middleware('auth')->prefix('it-support')->name('it.')->group(function () 
     Route::post('tickets/{id}/message', [ITTicket::class, 'sendMessage'])->name('tickets.message');
     Route::post('tickets/{id}/resolve', [ITTicket::class, 'markResolved'])->name('tickets.resolve');
 });
->>>>>>> d4779e587f5d906a32ef00c31279318cc940a3ee
+
