@@ -22,6 +22,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+<<<<<<< HEAD
+=======
+        'role',
+>>>>>>> d4779e587f5d906a32ef00c31279318cc940a3ee
     ];
 
     /**
@@ -46,4 +50,8 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+<<<<<<< HEAD
+=======
+    
+>>>>>>> d4779e587f5d906a32ef00c31279318cc940a3ee
 }
