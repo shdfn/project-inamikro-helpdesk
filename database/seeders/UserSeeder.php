@@ -12,6 +12,7 @@ class UserSeeder extends Seeder
     {
         User::create([
             'name' => 'Budi Santoso',
+            'username' => 'Budi Santoso',
             'email' => 'mentor@inamikro.com',
             'password' => Hash::make('password'),
             'role' => 'mentor',
@@ -19,6 +20,7 @@ class UserSeeder extends Seeder
 
         User::create([
             'name' => 'Andi Pratama',
+            'username' => 'Andi Pratama',
             'email' => 'it@inamikro.com',
             'password' => Hash::make('password'),
             'role' => 'it_support',
@@ -26,6 +28,7 @@ class UserSeeder extends Seeder
 
         User::create([
             'name' => 'Siti Kepala',
+            'username' => 'Siti Kepala',
             'email' => 'kepala@inamikro.com',
             'password' => Hash::make('password'),
             'role' => 'kepala_it',

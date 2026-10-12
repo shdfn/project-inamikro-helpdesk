@@ -15,7 +15,7 @@
 
 <div class="col-md-3 col-lg-2 sidebar p-3 d-flex flex-column">
     <div class="d-flex align-items-center mb-4 ps-2">
-        <h3 class="fw-bold m-0" style="color: var(--inamikro-red);">INAmikro</h3>
+        <img src="{{ asset('images/logo-inamikro.png') }}" alt="INAmikro" style="height: 35px;">
     </div>
 
     <nav class="nav flex-column mb-auto">

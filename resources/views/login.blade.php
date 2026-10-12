@@ -18,13 +18,23 @@
 <body>
     <div class="login-card">
         <div class="text-center mb-4">
-            <h2 class="fw-bold mb-1" style="color: #d81b21;">INAmikro</h2>
-            <p class="text-muted small">Portal Layanan Bantuan & Manajemen Tiket Terpadu</p>
+            <img src="{{ asset('images/logo-inamikro.png') }}" alt="INAmikro" style="height: 55px;" class="mb-2"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <h2 class="fw-bold mb-1" style="color: #d81b21; display:none;">INAmikro</h2>
+            <p class="text-muted small mb-0">Portal Layanan Bantuan & Manajemen Tiket Terpadu</p>
         </div>
 
+        {{-- Pesan error umum --}}
         @if ($errors->any())
-            <div class="alert alert-danger small">
-                {{ $errors->first() }}
+            <div class="alert alert-danger small py-2">
+                <i class="bi bi-exclamation-circle"></i> {{ $errors->first() }}
+            </div>
+        @endif
+
+        {{-- Pesan sukses (misal setelah reset password) --}}
+        @if (session('status'))
+            <div class="alert alert-success small py-2">
+                <i class="bi bi-check-circle"></i> {{ session('status') }}
             </div>
         @endif
 
@@ -32,21 +42,24 @@
             @csrf
 
             <div class="mb-3">
-                <label class="form-label small fw-bold">Email atau Nama Pengguna</label>
+                <label class="form-label small fw-bold">Email atau Username</label>
                 <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                    <input type="email" name="email" value="{{ old('email') }}" class="form-control" placeholder="abc@gmail.com" required>
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" name="login" value="{{ old('login') }}"
+                           class="form-control" placeholder="Masukkan email atau username" required autofocus>
                 </div>
             </div>
 
             <div class="mb-3">
                 <div class="d-flex justify-content-between">
                     <label class="form-label small fw-bold">Kata Sandi</label>
-                    <a href="#" class="text-decoration-none small" style="color: #d81b21;">Lupa Kata Sandi?</a>
+                    <a href="{{ route('password.request') }}" class="text-decoration-none small" style="color: #d81b21;">
+                        Lupa Kata Sandi?
+                    </a>
                 </div>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                    <input type="password" name="password" class="form-control" placeholder=".........." required>
+                    <input type="password" name="password" class="form-control" placeholder="••••••••" required>
                 </div>
             </div>
 
@@ -57,10 +70,6 @@
 
             <button type="submit" class="btn btn-inamikro w-100 py-2 fw-bold">Masuk ke Portal</button>
         </form>
-
-        <div class="text-center mt-3 small text-muted">
-            <div>Demo: mentor@inamikro.com / password</div>
-        </div>
     </div>
 </body>
 </html>

@@ -13,6 +13,9 @@ use App\Http\Controllers\ITSupport\DashboardController as ITDashboard;
 use App\Http\Controllers\ITSupport\TicketController as ITTicket;
 use App\Http\Controllers\ITSupport\NotificationController as ITNotification;
 
+// Reset Password
+use App\Http\Controllers\Auth\PasswordResetController;
+
 // Redirect root ke login
 Route::get('/', fn() => redirect('/login'));
 
@@ -53,3 +56,9 @@ Route::middleware('auth')->prefix('it-support')->name('it.')->group(function () 
     Route::post('tickets/{id}/message', [ITTicket::class, 'sendMessage'])->name('tickets.message');
     Route::post('tickets/{id}/resolve', [ITTicket::class, 'markResolved'])->name('tickets.resolve');
 });
+
+// Lupa Sandi
+Route::get('forgot-password', [PasswordResetController::class, 'showForgotForm'])->name('password.request');
+Route::post('forgot-password', [PasswordResetController::class, 'sendResetLink'])->name('password.email');
+Route::get('reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
+Route::post('reset-password', [PasswordResetController::class, 'resetPassword'])->name('password.update');
