@@ -67,6 +67,24 @@
                href="{{ route('it.notifications.index') }}">
                 <i class="bi bi-bell me-2"></i> Notifikasi
             </a>
+
+            @elseif($role === 'kepala_it')
+            <a class="nav-link {{ request()->routeIs('kepala.dashboard') ? 'active' : '' }}"
+            href="{{ route('kepala.dashboard') }}">
+                <i class="bi bi-speedometer2 me-2"></i> Dashboard Eksekutif
+            </a>
+            <a class="nav-link {{ request()->routeIs('kepala.reports.sla') ? 'active' : '' }}"
+            href="{{ route('kepala.reports.sla') }}">
+                <i class="bi bi-file-earmark-bar-graph me-2"></i> Laporan SLA
+            </a>
+            <a class="nav-link {{ request()->routeIs('kepala.reports.performance') ? 'active' : '' }}"
+            href="{{ route('kepala.reports.performance') }}">
+                <i class="bi bi-trophy me-2"></i> Performa IT Support
+            </a>
+            <a class="nav-link {{ request()->routeIs('kepala.users.*') ? 'active' : '' }}"
+            href="{{ route('kepala.users.index') }}">
+                <i class="bi bi-people me-2"></i> Manajemen User
+            </a>
         @endif
     </nav>
 

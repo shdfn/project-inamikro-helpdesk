@@ -23,6 +23,7 @@ class User extends Authenticatable
         'username',
         'email',
         'password',
+        'role',       // ← DITAMBAHKAN
     ];
 
     /**
@@ -48,4 +49,21 @@ class User extends Authenticatable
         ];
     }
 
+    // ================= RELASI =================
+
+    /**
+     * Tiket yang dibuat oleh user ini sebagai Mentor.
+     */
+    public function ticketsAsMentor()
+    {
+        return $this->hasMany(Ticket::class, 'mentor_id');
+    }
+
+    /**
+     * Tiket yang ditangani oleh user ini sebagai IT Support.
+     */
+    public function ticketsAsSupport()
+    {
+        return $this->hasMany(Ticket::class, 'it_support_id');
+    }
 }
