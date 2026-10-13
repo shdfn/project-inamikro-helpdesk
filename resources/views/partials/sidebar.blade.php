@@ -10,6 +10,10 @@
         $badgeMasuk = \App\Models\Ticket::where('status', 'Baru')->count();
         $badgeDitangani = \App\Models\Ticket::where('it_support_id', $user->id)
             ->where('status', 'Diproses')->count();
+    } elseif ($role === 'kepala_it') {
+        $lateCount = \App\Models\Ticket::whereIn('status', ['Baru', 'Diproses'])
+            ->whereRaw('TIMESTAMPDIFF(MINUTE, created_at, NOW()) > 120')
+            ->count();
     }
 @endphp
 
@@ -19,6 +23,8 @@
     </div>
 
     <nav class="nav flex-column mb-auto">
+
+        {{-- ================= MENTOR ================= --}}
         @if($role === 'mentor')
             <a class="nav-link {{ request()->routeIs('mentor.dashboard') ? 'active' : '' }}"
                href="{{ route('mentor.dashboard') }}">
@@ -40,6 +46,7 @@
                 <i class="bi bi-bell me-2"></i> Notifikasi
             </a>
 
+        {{-- ================= IT SUPPORT ================= --}}
         @elseif($role === 'it_support')
             <a class="nav-link {{ request()->routeIs('it.dashboard') ? 'active' : '' }}"
                href="{{ route('it.dashboard') }}">
@@ -68,26 +75,49 @@
                 <i class="bi bi-bell me-2"></i> Notifikasi
             </a>
 
-            @elseif($role === 'kepala_it')
+        {{-- ================= KEPALA IT ================= --}}
+        @elseif($role === 'kepala_it')
+
+            <small class="text-muted px-3 mt-2 mb-1" style="font-size: 0.7rem; letter-spacing: 1px;">MONITORING</small>
+
             <a class="nav-link {{ request()->routeIs('kepala.dashboard') ? 'active' : '' }}"
-            href="{{ route('kepala.dashboard') }}">
-                <i class="bi bi-speedometer2 me-2"></i> Dashboard Eksekutif
+               href="{{ route('kepala.dashboard') }}">
+                <i class="bi bi-grid-1x2 me-2"></i> Dashboard
             </a>
-            <a class="nav-link {{ request()->routeIs('kepala.reports.sla') ? 'active' : '' }}"
-            href="{{ route('kepala.reports.sla') }}">
-                <i class="bi bi-file-earmark-bar-graph me-2"></i> Laporan SLA
+            <a class="nav-link {{ request()->routeIs('kepala.monitoring.sla') ? 'active' : '' }}"
+               href="{{ route('kepala.monitoring.sla') }}">
+                <i class="bi bi-activity me-2"></i> SLA IT Support
             </a>
-            <a class="nav-link {{ request()->routeIs('kepala.reports.performance') ? 'active' : '' }}"
-            href="{{ route('kepala.reports.performance') }}">
-                <i class="bi bi-trophy me-2"></i> Performa IT Support
+            <a class="nav-link {{ request()->routeIs('kepala.monitoring.statistik') ? 'active' : '' }}"
+               href="{{ route('kepala.monitoring.statistik') }}">
+                <i class="bi bi-graph-up-arrow me-2"></i> Statistik Kendala
             </a>
+
+            <small class="text-muted px-3 mt-3 mb-1" style="font-size: 0.7rem; letter-spacing: 1px;">TIKET</small>
+
+            <a class="nav-link {{ request()->routeIs('kepala.tickets.index') ? 'active' : '' }}"
+               href="{{ route('kepala.tickets.index') }}">
+                <i class="bi bi-ticket-detailed me-2"></i> Semua Tiket
+            </a>
+            <a class="nav-link {{ request()->routeIs('kepala.tickets.late') ? 'active' : '' }}"
+               href="{{ route('kepala.tickets.late') }}">
+                <i class="bi bi-exclamation-triangle me-2"></i> Tiket Lambat
+                @if($lateCount > 0)
+                    <span class="badge bg-danger text-white float-end rounded-pill">{{ $lateCount }}</span>
+                @endif
+            </a>
+
+            <small class="text-muted px-3 mt-3 mb-1" style="font-size: 0.7rem; letter-spacing: 1px;">LAINNYA</small>
+
             <a class="nav-link {{ request()->routeIs('kepala.users.*') ? 'active' : '' }}"
-            href="{{ route('kepala.users.index') }}">
+               href="{{ route('kepala.users.index') }}">
                 <i class="bi bi-people me-2"></i> Manajemen User
             </a>
         @endif
+
     </nav>
 
+    {{-- Profil User --}}
     <div class="mt-auto p-3 bg-light rounded-3 d-flex align-items-center">
         <div class="text-white rounded-circle p-2 me-2 d-flex align-items-center justify-content-center"
              style="width: 40px; height: 40px; background-color: var(--inamikro-red);">
@@ -95,11 +125,15 @@
         </div>
         <div class="flex-grow-1">
             <div class="fw-bold" style="font-size: 0.85rem;">{{ $user->name }}</div>
-            <div class="text-muted" style="font-size: 0.75rem;">{{ ucfirst(str_replace('_', ' ', $role)) }}</div>
+            <div class="text-muted" style="font-size: 0.75rem;">
+                {{ $role === 'kepala_it' ? 'Kepala IT' : ucfirst(str_replace('_', ' ', $role)) }}
+            </div>
         </div>
         <form method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="submit" class="btn btn-sm btn-link text-danger p-0"><i class="bi bi-box-arrow-right"></i></button>
+            <button type="submit" class="btn btn-sm btn-link text-danger p-0">
+                <i class="bi bi-box-arrow-right"></i>
+            </button>
         </form>
     </div>
 </div>
