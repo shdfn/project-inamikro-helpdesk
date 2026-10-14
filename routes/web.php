@@ -18,8 +18,10 @@ use App\Http\Controllers\ITSupport\NotificationController as ITNotification;
 
 // Kepala IT Controllers
 use App\Http\Controllers\KepalaIT\DashboardController as KepalaDashboard;
-use App\Http\Controllers\KepalaIT\ReportController as KepalaReport;
+use App\Http\Controllers\KepalaIT\MonitoringController as KepalaMonitoring;
+use App\Http\Controllers\KepalaIT\TicketController as KepalaTicket;
 use App\Http\Controllers\KepalaIT\UserController as KepalaUser;
+use App\Http\Controllers\KepalaIT\NotificationController as KepalaNotification;
 
 // ================= ROOT =================
 Route::get('/', fn() => redirect('/login'));
@@ -67,12 +69,22 @@ Route::middleware('auth')->prefix('it-support')->name('it.')->group(function () 
 
 // ================= KEPALA IT =================
 Route::middleware('auth')->prefix('kepala-it')->name('kepala.')->group(function () {
+    // Dashboard
     Route::get('dashboard', [KepalaDashboard::class, 'index'])->name('dashboard');
 
-    Route::get('reports/sla', [KepalaReport::class, 'sla'])->name('reports.sla');
-    Route::get('reports/performance', [KepalaReport::class, 'performance'])->name('reports.performance');
+    // Notifikasi
+    Route::get('notifications', [KepalaNotification::class, 'index'])->name('notifications.index');
 
-    // Manajemen User
+    // Monitoring
+    Route::get('monitoring/sla', [KepalaMonitoring::class, 'sla'])->name('monitoring.sla');
+    Route::get('monitoring/statistik', [KepalaMonitoring::class, 'statistik'])->name('monitoring.statistik');
+
+    // Tiket — URUTAN PENTING: late dulu, baru {id}
+    Route::get('tickets', [KepalaTicket::class, 'index'])->name('tickets.index');
+    Route::get('tickets/late', [KepalaTicket::class, 'late'])->name('tickets.late');
+    Route::get('tickets/{id}', [KepalaTicket::class, 'show'])->name('tickets.show');
+
+    // Manajemen User — URUTAN PENTING: create dulu, baru {id}
     Route::get('users', [KepalaUser::class, 'index'])->name('users.index');
     Route::get('users/create', [KepalaUser::class, 'create'])->name('users.create');
     Route::post('users', [KepalaUser::class, 'store'])->name('users.store');
