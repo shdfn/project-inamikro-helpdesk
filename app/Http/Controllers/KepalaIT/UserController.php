@@ -14,10 +14,12 @@ class UserController extends Controller
     {
         $query = User::query();
 
+        // Filter role
         if ($request->filled('role')) {
             $query->where('role', $request->role);
         }
 
+        // Search
         if ($request->filled('q')) {
             $search = $request->q;
             $query->where(function ($q) use ($search) {
@@ -27,8 +29,7 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->orderBy('role')->orderBy('name')->get();
-
+        $users = $query->orderBy('created_at', 'desc')->get();
         return view('kepala-it.users.index', compact('users'));
     }
 
@@ -40,15 +41,15 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:100',
-            'username' => 'required|string|max:50|unique:users,username',
+            'name' => 'required',
+            'username' => 'required|unique:users,username',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6|confirmed',
+            'password' => 'required|min:6',
             'role' => 'required|in:mentor,it_support,kepala_it',
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route('kepala.users.create')->withErrors($validator)->withInput();
+            return back()->withErrors($validator)->withInput();
         }
 
         User::create([
@@ -59,8 +60,7 @@ class UserController extends Controller
             'role' => $request->role,
         ]);
 
-        return redirect()->route('kepala.users.index')
-            ->with('success', 'User berhasil ditambahkan.');
+        return redirect()->route('kepala.users.index')->with('success', 'User berhasil ditambahkan.');
     }
 
     public function edit($id)
@@ -74,16 +74,14 @@ class UserController extends Controller
         $user = User::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:100',
-            'username' => 'required|string|max:50|unique:users,username,' . $user->id,
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'name' => 'required',
+            'username' => 'required|unique:users,username,' . $id,
+            'email' => 'required|email|unique:users,email,' . $id,
             'role' => 'required|in:mentor,it_support,kepala_it',
-            'password' => 'nullable|min:6|confirmed',
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route('kepala.users.edit', $user->id)
-                ->withErrors($validator)->withInput();
+            return back()->withErrors($validator)->withInput();
         }
 
         $data = [
@@ -99,8 +97,7 @@ class UserController extends Controller
 
         $user->update($data);
 
-        return redirect()->route('kepala.users.index')
-            ->with('success', 'User berhasil diperbarui.');
+        return redirect()->route('kepala.users.index')->with('success', 'User berhasil diupdate.');
     }
 
     public function destroy($id)
@@ -108,11 +105,10 @@ class UserController extends Controller
         $user = User::findOrFail($id);
 
         if ($user->id === auth()->id()) {
-            return back()->with('error', 'Anda tidak bisa menghapus akun sendiri.');
+            return back()->with('error', 'Tidak bisa menghapus akun sendiri.');
         }
 
         $user->delete();
-
         return back()->with('success', 'User berhasil dihapus.');
     }
 }

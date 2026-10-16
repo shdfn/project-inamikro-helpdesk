@@ -19,6 +19,8 @@ use App\Http\Controllers\ITSupport\NotificationController as ITNotification;
 // Kepala IT Controllers
 use App\Http\Controllers\KepalaIT\DashboardController as KepalaDashboard;
 use App\Http\Controllers\KepalaIT\MonitoringController as KepalaMonitoring;
+use App\Http\Controllers\KepalaIT\StatistikController as KepalaStatistik;
+use App\Http\Controllers\KepalaIT\EskalasiController as KepalaEskalasi;
 use App\Http\Controllers\KepalaIT\TicketController as KepalaTicket;
 use App\Http\Controllers\KepalaIT\UserController as KepalaUser;
 use App\Http\Controllers\KepalaIT\NotificationController as KepalaNotification;
@@ -48,6 +50,11 @@ Route::middleware('auth')->prefix('mentor')->name('mentor.')->group(function () 
     Route::get('tickets/{id}', [MentorTicket::class, 'show'])->name('tickets.show');
     Route::post('tickets/{id}/message', [MentorTicket::class, 'sendMessage'])->name('tickets.message');
     Route::post('tickets/{id}/confirm', [MentorTicket::class, 'confirmResolution'])->name('tickets.confirm');
+
+    Route::get('hubungi-it', function () {
+    $itSupports = \App\Models\User::where('role', 'it_support')->get();
+    return view('mentor.hubungi-it', compact('itSupports'));
+    })->name('hubungi-it');
 });
 
 // ================= IT SUPPORT =================
@@ -69,22 +76,31 @@ Route::middleware('auth')->prefix('it-support')->name('it.')->group(function () 
 
 // ================= KEPALA IT =================
 Route::middleware('auth')->prefix('kepala-it')->name('kepala.')->group(function () {
+
     // Dashboard
     Route::get('dashboard', [KepalaDashboard::class, 'index'])->name('dashboard');
 
     // Notifikasi
     Route::get('notifications', [KepalaNotification::class, 'index'])->name('notifications.index');
 
-    // Monitoring
-    Route::get('monitoring/sla', [KepalaMonitoring::class, 'sla'])->name('monitoring.sla');
+    // Monitoring Eksekutif (dengan alias agar kompatibel)
+    Route::get('monitoring', [KepalaMonitoring::class, 'index'])->name('monitoring');
+    Route::get('monitoring/sla', [KepalaMonitoring::class, 'index'])->name('monitoring.sla');
     Route::get('monitoring/statistik', [KepalaMonitoring::class, 'statistik'])->name('monitoring.statistik');
 
-    // Tiket — URUTAN PENTING: late dulu, baru {id}
+    // Statistik & Analitik
+    Route::get('statistik', [KepalaStatistik::class, 'index'])->name('statistik');
+
+    // Eskalasi & Pantauan
+    Route::get('eskalasi', [KepalaEskalasi::class, 'index'])->name('eskalasi');
+
+    // Tiket — URUTAN PENTING
     Route::get('tickets', [KepalaTicket::class, 'index'])->name('tickets.index');
+    Route::get('tickets/export', [KepalaTicket::class, 'export'])->name('tickets.export');
     Route::get('tickets/late', [KepalaTicket::class, 'late'])->name('tickets.late');
     Route::get('tickets/{id}', [KepalaTicket::class, 'show'])->name('tickets.show');
 
-    // Manajemen User — URUTAN PENTING: create dulu, baru {id}
+    // Manajemen User
     Route::get('users', [KepalaUser::class, 'index'])->name('users.index');
     Route::get('users/create', [KepalaUser::class, 'create'])->name('users.create');
     Route::post('users', [KepalaUser::class, 'store'])->name('users.store');

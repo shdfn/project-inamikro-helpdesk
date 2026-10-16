@@ -96,7 +96,9 @@
             <i class="bi bi-file-earmark-plus text-secondary" style="font-size: 4rem;"></i>
             <h5 class="fw-bold mt-3">Butuh Bantuan?</h5>
             <p class="text-muted small">Jika ada kendala yang belum bisa ditangani, silakan hubungi Kepala IT</p>
-            <button class="btn btn-inamikro w-100 mt-2">Hubungi IT Support</button>
+            <a href="{{ route('mentor.hubungi-it') }}" class="btn btn-inamikro w-100 mt-2">
+                <i class="bi bi-headset"></i> Hubungi IT Support
+            </a>
         </div>
     </div>
 </div>

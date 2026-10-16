@@ -1,56 +1,50 @@
 @extends('template')
+
 @section('judul', 'Notifikasi')
-@section('breadcrumb', 'Notifikasi')
 
 @section('konten')
+
 <div class="card card-custom p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h4 class="fw-bold mb-0">Notifikasi Eskalasi</h4>
-            <p class="text-muted mb-0">Tiket yang membutuhkan perhatian Kepala IT</p>
+            <h4 class="fw-bold mb-0">Notifikasi</h4>
+            <p class="text-muted mb-0 small">Pemberitahuan terbaru untuk Anda</p>
         </div>
-        <span class="badge bg-danger rounded-pill px-3 py-2">
-            {{ $lateTickets->count() }} tiket lambat
-        </span>
+        <small class="text-muted">{{ $notifications->count() }} notifikasi</small>
     </div>
 
-    @forelse($lateTickets as $t)
-        @php
-            $menit = $t->created_at->diffInMinutes(now());
-            $jam   = floor($menit / 60);
-            $sisa  = $menit % 60;
-        @endphp
-        <a href="{{ route('kepala.tickets.show', $t->id) }}"
-           class="d-flex align-items-start p-3 border-bottom text-decoration-none text-dark">
+    @forelse($notifications as $notif)
+        <a href="{{ $notif->ticket_id ? route('kepala.tickets.show', $notif->ticket_id) : '#' }}"
+           class="d-flex align-items-start p-3 border-bottom text-decoration-none text-dark
+                  {{ $notif->is_read ? '' : 'bg-light' }}">
             <div class="me-3 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width: 45px; height: 45px; background-color: #f8d7da;">
-                <i class="bi bi-exclamation-triangle" style="color: #d81b21;"></i>
+                <i class="bi bi-bell" style="color: #d81b21;"></i>
             </div>
             <div class="flex-grow-1">
                 <div class="fw-bold">
-                    Tiket #{{ $t->ticket_number }} — {{ $t->title }}
+                    {{ $notif->title }}
+                    @if(!$notif->is_read)
+                        <span class="badge bg-danger ms-2" style="font-size: 0.65rem;">Baru</span>
+                    @endif
                 </div>
-                <div class="text-muted small">
-                    Pelapor: {{ $t->mentor->name ?? '-' }} &middot;
-                    PIC: {{ $t->itSupport->name ?? 'Belum ditugaskan' }} &middot;
-                    Status: {{ $t->status }} &middot;
-                    Prioritas: {{ $t->priority }}
-                </div>
-                <div class="mt-1">
-                    <span class="badge badge-soft-danger rounded-pill px-3">
-                        <i class="bi bi-clock-history"></i> Lewat SLA {{ $jam }}j {{ $sisa }}m
-                    </span>
-                </div>
+                <div class="text-muted small">{{ $notif->body }}</div>
+                @if($notif->sender)
+                    <div class="text-muted small mt-1">
+                        <i class="bi bi-person"></i> Dari: {{ $notif->sender->name }}
+                    </div>
+                @endif
             </div>
-            <small class="text-muted flex-shrink-0">
-                {{ $t->created_at->diffForHumans() }}
+            <small class="text-muted flex-shrink-0 ms-2">
+                {{ $notif->created_at->diffForHumans() }}
             </small>
         </a>
     @empty
         <div class="text-center py-5 text-muted">
-            <i class="bi bi-check-circle fs-1 text-success"></i>
-            <p class="mt-2">Tidak ada notifikasi. Semua tiket dalam kondisi baik. 🎉</p>
+            <i class="bi bi-bell-slash fs-1"></i>
+            <p class="mt-2 mb-0">Belum ada notifikasi.</p>
         </div>
     @endforelse
 </div>
+
 @endsection

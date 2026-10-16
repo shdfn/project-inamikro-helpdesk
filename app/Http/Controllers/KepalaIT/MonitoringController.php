@@ -5,105 +5,89 @@ namespace App\Http\Controllers\KepalaIT;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class MonitoringController extends Controller
 {
-    // ================= SLA IT SUPPORT =================
-    public function sla()
+    /**
+     * Halaman Monitoring Eksekutif (default).
+     * Menampilkan: rata-rata respon, penyelesaian SLA, teknisi on-duty, kepuasan, kategori teratas.
+     */
+    public function index(Request $request)
     {
-        // Rata-rata respon pertama (menit)
-        $avgResponse = Ticket::whereNotNull('first_response_at')
-            ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_response_at)) as m')
-            ->value('m') ?? 0;
+        // Filter bulan (default: bulan ini)
+        $month = $request->input('month', now()->month);
+        $year = $request->input('year', now()->year);
 
-        // SLA keseluruhan
-        $resolved = Ticket::whereIn('status', ['Selesai', 'Ditutup'])->count();
-        $slaOk    = Ticket::whereNotNull('resolved_at')
+        // Rata-rata Respon Pertama (menit)
+        $avgRespon = Ticket::whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
+            ->whereNotNull('first_response_at')
+            ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_response_at)) as avg_minutes')
+            ->value('avg_minutes') ?? 0;
+
+        // Penyelesaian SLA (< 24 jam)
+        $totalSelesai = Ticket::whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
+            ->whereIn('status', ['Selesai', 'Ditutup'])
+            ->count();
+
+        $dalamSLA = Ticket::whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
+            ->whereNotNull('resolved_at')
             ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, resolved_at) <= 24')
             ->count();
-        $slaPercent = $resolved > 0 ? round(($slaOk / $resolved) * 100, 1) : 0;
 
-        // Teknisi on-duty
-        $onDuty = User::where('role', 'it_support')->count();
+        $persenSLA = $totalSelesai > 0 ? round(($dalamSLA / $totalSelesai) * 100, 1) : 0;
 
-        // Performa per IT Support
-        $itSupports = User::where('role', 'it_support')->get()->map(function ($u) {
-            $avg = Ticket::where('it_support_id', $u->id)
-                ->whereNotNull('first_response_at')
-                ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_response_at)) as m')
-                ->value('m') ?? 0;
+        // Teknisi On-Duty (yang sedang menangani tiket)
+        $onDuty = User::where('role', 'it_support')
+            ->withCount([
+                'ticketsAsSupport as sedang_ditangani' => function ($q) {
+                    $q->whereIn('status', ['Ditangani IT', 'Dibalas IT', 'Dibalas Mentor']);
+                },
+                'ticketsAsSupport as total_ditangani' => function ($q) {
+                    $q->whereIn('status', ['Selesai', 'Ditutup']);
+                },
+            ])
+            ->get();
 
-            $totalHandled = Ticket::where('it_support_id', $u->id)->count();
-
-            $selesai = Ticket::where('it_support_id', $u->id)
-                ->whereIn('status', ['Selesai', 'Ditutup'])->count();
-
-            $slaOk = Ticket::where('it_support_id', $u->id)
-                ->whereNotNull('resolved_at')
-                ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, resolved_at) <= 24')
-                ->count();
-
-            $slaPct = $selesai > 0 ? round(($slaOk / $selesai) * 100) : 0;
-
-            // Label & warna
-            if ($slaPct >= 95) {
-                $status = 'Sangat Cepat'; $class = 'success';
-            } elseif ($slaPct >= 90) {
-                $status = 'On Track';     $class = 'primary';
-            } elseif ($slaPct >= 85) {
-                $status = 'Mendekati Target'; $class = 'warning';
-            } else {
-                $status = 'Perlu Perhatian';  $class = 'danger';
-            }
-
-            return (object) [
-                'name'           => $u->name,
-                'initial'        => strtoupper(substr($u->name, 0, 2)),
-                'role_label'     => 'IT Support',
-                'handled'        => $totalHandled,
-                'resolved'       => $selesai,
-                'avg_response'   => round($avg) . ' mnt',
-                'sla_percentage' => $slaPct,
-                'status'         => $status,
-                'status_class'   => $class,
-            ];
-        });
-
-        return view('kepala-it.monitoring.sla', compact(
-            'avgResponse', 'slaPercent', 'onDuty', 'itSupports'
-        ));
-    }
-
-    // ================= STATISTIK KENDALA =================
-    public function statistik()
-    {
-        // Total tiket
-        $total = Ticket::count();
-
-        // Rata-rata MTTR (Mean Time To Resolve) dalam menit
-        $avgMttr = Ticket::whereNotNull('resolved_at')
-            ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, resolved_at)) as m')
-            ->value('m') ?? 0;
-
-        // Top 5 kategori
-        $topCategories = Ticket::select('category_id', DB::raw('COUNT(*) as total'))
-            ->groupBy('category_id')
-            ->with('category')
-            ->orderBy('total', 'desc')
+        // 5 Kategori Kendala Teratas (bulan ini)
+        $kategoriTeratas = DB::table('tickets')
+            ->join('categories', 'tickets.category_id', '=', 'categories.id')
+            ->whereMonth('tickets.created_at', $month)
+            ->whereYear('tickets.created_at', $year)
+            ->select('categories.name', DB::raw('COUNT(*) as jumlah'))
+            ->groupBy('categories.name')
+            ->orderByDesc('jumlah')
             ->limit(5)
             ->get();
 
-        // Statistik per bulan (6 bulan terakhir)
-        $ticketsPerMonth = Ticket::selectRaw('MONTH(created_at) as month, YEAR(created_at) as year, COUNT(*) as total')
-            ->where('created_at', '>=', now()->subMonths(6))
-            ->groupBy('year', 'month')
-            ->orderBy('year', 'asc')
-            ->orderBy('month', 'asc')
-            ->get();
+        // Kepuasan Pengguna (dummy)
+        $kepuasan = 4.5;
 
-        return view('kepala-it.monitoring.statistik', compact(
-            'total', 'topCategories', 'avgMttr', 'ticketsPerMonth'
+        return view('kepala-it.monitoring', compact(
+            'avgRespon', 'persenSLA', 'totalSelesai', 'dalamSLA',
+            'onDuty', 'kategoriTeratas', 'kepuasan', 'month', 'year'
         ));
+    }
+
+    /**
+     * Alias method SLA — sama dengan index().
+     * Dipakai oleh route `kepala.monitoring.sla`.
+     */
+    public function sla(Request $request)
+    {
+        return $this->index($request);
+    }
+
+    /**
+     * Alias method statistik — redirect ke halaman statistik.
+     * Dipakai oleh route `kepala.monitoring.statistik`.
+     */
+    public function statistik()
+    {
+        return redirect()->route('kepala.statistik');
     }
 }
