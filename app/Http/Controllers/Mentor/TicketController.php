@@ -17,20 +17,25 @@ class TicketController extends Controller
     {
         $query = Ticket::where('mentor_id', auth()->id())->with('category');
 
+        // Search
         if ($request->filled('q')) {
             $search = $request->q;
             $query->where(function ($q) use ($search) {
                 $q->where('ticket_number', 'like', "%{$search}%")
-                  ->orWhere('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                ->orWhere('title', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
-        if ($request->filled('status') && $request->status !== 'semua') {
+        // Filter status
+        if ($request->filled('status')) {
             $statusMap = [
                 'baru' => 'Baru',
-                'diproses' => 'Diproses',
+                'ditangani' => 'Ditangani IT',
+                'dibalas_it' => 'Dibalas IT',
+                'dibalas_mentor' => 'Dibalas Mentor',
                 'selesai' => 'Selesai',
+                'ditutup' => 'Ditutup',
             ];
             if (isset($statusMap[$request->status])) {
                 $query->where('status', $statusMap[$request->status]);
@@ -39,16 +44,10 @@ class TicketController extends Controller
 
         $tickets = $query->orderBy('created_at', 'desc')->get();
 
-        $counts = [
-            'semua' => Ticket::where('mentor_id', auth()->id())->count(),
-            'baru' => Ticket::where('mentor_id', auth()->id())->where('status', 'Baru')->count(),
-            'diproses' => Ticket::where('mentor_id', auth()->id())->where('status', 'Diproses')->count(),
-            'selesai' => Ticket::where('mentor_id', auth()->id())->where('status', 'Selesai')->count(),
-        ];
-
-        return view('mentor.tickets.index', compact('tickets', 'counts'));
+        // ⚠️ $counts tidak perlu lagi
+        return view('mentor.tickets.index', compact('tickets'));
     }
-
+    
     // ============ CREATE ============
     public function create()
     {
@@ -78,6 +77,7 @@ class TicketController extends Controller
             return redirect()->route('mentor.tickets.create')->withErrors($validator)->withInput();
         }
 
+        // Generate ticket_number yang aman
         $lastId = Ticket::max('id') ?? 0;
         $ticketNumber = 'TK-' . str_pad($lastId + 1, 3, '0', STR_PAD_LEFT);
 
@@ -93,7 +93,7 @@ class TicketController extends Controller
             'priority' => $request->priority,
             'category_id' => $request->category_id,
             'mentor_id' => auth()->id(),
-            'status' => 'Baru',
+            'status' => 'Baru',                  // ← Status awal
             'attachment' => $attachmentPath,
         ]);
 
@@ -116,6 +116,7 @@ class TicketController extends Controller
     {
         $ticket = Ticket::where('mentor_id', auth()->id())->findOrFail($id);
 
+        // Cegah kirim pesan kalau tiket sudah ditutup
         if ($ticket->status === 'Ditutup') {
             return back()->with('error', 'Tiket sudah ditutup, tidak bisa mengirim pesan.');
         }
@@ -141,6 +142,12 @@ class TicketController extends Controller
             'attachment' => $attachmentPath,
         ]);
 
+        // ⭐ Update status ke "Dibalas Mentor"
+        // Hanya kalau IT sudah pernah balas (status "Ditangani IT" atau "Dibalas IT")
+        if (in_array($ticket->status, ['Ditangani IT', 'Dibalas IT'])) {
+            $ticket->update(['status' => 'Dibalas Mentor']);
+        }
+
         // 📬 NOTIFIKASI KE IT SUPPORT
         if ($ticket->it_support_id) {
             NotificationHelper::send(
@@ -161,6 +168,7 @@ class TicketController extends Controller
     {
         $ticket = Ticket::where('mentor_id', auth()->id())->findOrFail($id);
 
+        // Hanya bisa konfirmasi kalau status sudah Selesai
         if ($ticket->status !== 'Selesai') {
             return back()->with('error', 'Tiket belum bisa dikonfirmasi. Tunggu IT Support menandai selesai.');
         }

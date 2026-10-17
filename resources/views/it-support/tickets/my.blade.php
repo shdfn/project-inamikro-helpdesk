@@ -47,8 +47,9 @@
                                     default => 'badge-soft-success',
                                 };
                             @endphp
-                            <span class="badge {{ $pc }} rounded-pill px-3">{{ $ticket->priority }}</span>
-                        </td>
+                            <span class="badge {{ $ticket->status_badge_class }} rounded-pill px-3">
+                                <i class="bi bi-{{ $ticket->status_icon }}"></i> {{ $ticket->status }}
+                            </span>                        </td>
                         <td>{{ $ticket->mentor->name ?? '-' }}</td>
                         <td>{{ $ticket->created_at->format('n/j/y H:i') }}</td>
                         <td>

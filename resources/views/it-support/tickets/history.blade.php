@@ -102,8 +102,8 @@
                         <td>{{ $ticket->mentor->name ?? '-' }}</td>
                         <td>{{ $ticket->created_at->format('n/j/y H:i') }}</td>
                         <td>
-                            <span class="badge badge-soft-success rounded-pill px-3">
-                                <i class="bi bi-check"></i> {{ $ticket->status }}
+                            <span class="badge {{ $ticket->status_badge_class }} rounded-pill px-3">
+                                <i class="bi bi-{{ $ticket->status_icon }}"></i> {{ $ticket->status }}
                             </span>
                         </td>
                     </tr>

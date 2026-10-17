@@ -1,165 +1,178 @@
 @extends('template')
-@section('judul', 'Semua Tiket')
-@section('breadcrumb', 'Pengawasan Tiket Masuk')
+
+@section('judul', 'Pengawasan Tiket')
 
 @section('konten')
 
-{{-- Header --}}
-<div class="d-flex justify-content-between mb-3">
-    <div>
-        <h3 class="fw-bold mb-0">Pengawasan Tiket Masuk</h3>
-        <p class="text-muted mb-0">Ringkasan seluruh tiket masuk, status penanganan, dan teknisi PIC.</p>
-    </div>
-</div>
-
-{{-- Kartu Statistik --}}
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card card-custom p-3">
-            <small class="text-muted fw-bold">TOTAL TIKET</small>
-            <h2 class="fw-bold my-1">{{ $counts['semua'] }}</h2>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card card-custom p-3">
-            <small class="text-muted fw-bold">MENUNGGU RESPON</small>
-            <h2 class="fw-bold my-1 text-danger">{{ $counts['baru'] }}</h2>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card card-custom p-3">
-            <small class="text-muted fw-bold">SEDANG DIKERJAKAN</small>
-            <h2 class="fw-bold my-1">{{ $counts['diproses'] }}</h2>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card card-custom p-3">
-            <small class="text-muted fw-bold">TELAH DITUTUP</small>
-            <h2 class="fw-bold my-1">{{ $counts['selesai'] }}</h2>
-        </div>
-    </div>
-</div>
-
-{{-- Card Utama --}}
 <div class="card card-custom p-4">
-
-    {{-- TAB FILTER (dengan q) --}}
-    <ul class="nav nav-tabs mb-3 border-0">
-        <li class="nav-item">
-            <a class="nav-link border-0 bg-transparent {{ !request('status') ? 'active fw-bold' : 'text-muted' }}"
-               style="{{ !request('status') ? 'color:#d81b21;' : '' }}"
-               href="{{ route('kepala.tickets.index', ['q' => request('q'), 'category_id' => request('category_id')]) }}">
-                Semua ({{ $counts['semua'] }})
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link border-0 bg-transparent {{ request('status') == 'Baru' ? 'active fw-bold' : 'text-muted' }}"
-               style="{{ request('status') == 'Baru' ? 'color:#d81b21;' : '' }}"
-               href="{{ route('kepala.tickets.index', ['status' => 'Baru', 'q' => request('q'), 'category_id' => request('category_id')]) }}">
-                Baru ({{ $counts['baru'] }})
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link border-0 bg-transparent {{ request('status') == 'Diproses' ? 'active fw-bold' : 'text-muted' }}"
-               style="{{ request('status') == 'Diproses' ? 'color:#d81b21;' : '' }}"
-               href="{{ route('kepala.tickets.index', ['status' => 'Diproses', 'q' => request('q'), 'category_id' => request('category_id')]) }}">
-                Diproses ({{ $counts['diproses'] }})
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link border-0 bg-transparent {{ request('status') == 'Selesai' ? 'active fw-bold' : 'text-muted' }}"
-               style="{{ request('status') == 'Selesai' ? 'color:#d81b21;' : '' }}"
-               href="{{ route('kepala.tickets.index', ['status' => 'Selesai', 'q' => request('q'), 'category_id' => request('category_id')]) }}">
-                Selesai ({{ $counts['selesai'] }})
-            </a>
-        </li>
-    </ul>
-
-    {{-- Form Filter Tambahan (Kategori) --}}
-    <form method="GET" class="row g-2 mb-3">
-        {{-- Pertahankan q & status saat filter kategori --}}
-        <input type="hidden" name="q" value="{{ request('q') }}">
-        <input type="hidden" name="status" value="{{ request('status') }}">
-
-        <div class="col-md-4">
-            <input type="text" name="q" value="{{ request('q') }}" class="form-control" placeholder="Cari ID tiket, judul...">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold mb-0">Pengawasan Tiket</h4>
+            <p class="text-muted mb-0">Semua tiket dari seluruh divisi</p>
         </div>
+        <a href="{{ route('kepala.tickets.export', request()->query()) }}"
+           class="btn btn-outline-danger">
+            <i class="bi bi-download"></i> Export CSV
+        </a>
+    </div>
+
+    {{-- FILTER BAR --}}
+    <form method="GET" action="{{ route('kepala.tickets.index') }}" class="row g-2 mb-3">
+        {{-- Search --}}
         <div class="col-md-3">
+            <div class="input-group">
+                <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" value="{{ request('q') }}"
+                       class="form-control bg-light border-0"
+                       placeholder="Cari tiket, judul, kategori...">
+            </div>
+        </div>
+
+        {{-- Filter Status --}}
+        <div class="col-md-2">
+            <select name="status" class="form-select">
+                <option value="">Semua Status</option>
+                <option value="Baru" {{ request('status') == 'Baru' ? 'selected' : '' }}>Baru</option>
+                <option value="Ditangani IT" {{ request('status') == 'Ditangani IT' ? 'selected' : '' }}>Ditangani IT</option>
+                <option value="Dibalas IT" {{ request('status') == 'Dibalas IT' ? 'selected' : '' }}>Dibalas IT</option>
+                <option value="Dibalas Mentor" {{ request('status') == 'Dibalas Mentor' ? 'selected' : '' }}>Dibalas Mentor</option>
+                <option value="Selesai" {{ request('status') == 'Selesai' ? 'selected' : '' }}>Selesai</option>
+                <option value="Ditutup" {{ request('status') == 'Ditutup' ? 'selected' : '' }}>Ditutup</option>
+            </select>
+        </div>
+
+        {{-- Filter Kategori --}}
+        <div class="col-md-2">
             <select name="category_id" class="form-select">
                 <option value="">Semua Kategori</option>
-                @foreach($categories as $c)
-                    <option value="{{ $c->id }}" {{ request('category_id') == $c->id ? 'selected' : '' }}>
-                        {{ $c->name }}
+                @foreach($categories as $cat)
+                    <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>
+                        {{ $cat->name }}
                     </option>
                 @endforeach
             </select>
         </div>
+
+        {{-- Filter Prioritas --}}
         <div class="col-md-2">
-            <button class="btn btn-inamikro w-100">Filter</button>
+            <select name="priority" class="form-select">
+                <option value="">Semua Prioritas</option>
+                <option value="Tinggi" {{ request('priority') == 'Tinggi' ? 'selected' : '' }}>Tinggi</option>
+                <option value="Sedang" {{ request('priority') == 'Sedang' ? 'selected' : '' }}>Sedang</option>
+                <option value="Rendah" {{ request('priority') == 'Rendah' ? 'selected' : '' }}>Rendah</option>
+            </select>
         </div>
+
+        {{-- Tombol Filter --}}
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-inamikro w-100" title="Filter">
+                <i class="bi bi-funnel"></i>
+            </button>
+        </div>
+
+        {{-- Tombol Reset --}}
         <div class="col-md-2">
-            <a href="{{ route('kepala.tickets.index') }}" class="btn btn-outline-secondary w-100">Reset</a>
+            <a href="{{ route('kepala.tickets.index') }}"
+               class="btn btn-outline-secondary w-100">
+                <i class="bi bi-arrow-clockwise"></i> Reset
+            </a>
         </div>
     </form>
 
-    {{-- Info Jumlah --}}
+    {{-- INFO JUMLAH --}}
     <div class="d-flex justify-content-between align-items-center mb-2">
         <small class="text-muted">
-            Menampilkan <strong>{{ $tickets->count() }}</strong> dari
-            <strong>{{ $tickets->total() }}</strong> tiket
+            Total: <strong>{{ $tickets->total() }}</strong> tiket
+            @if(request('q') || request('status') || request('category_id') || request('priority'))
+                (terfilter)
+            @endif
         </small>
-        @if(request('q') || request('status') || request('category_id'))
-            <a href="{{ route('kepala.tickets.index') }}" class="text-decoration-none small text-danger">
+        @if(request()->has('q') || request()->has('status') || request()->has('category_id') || request()->has('priority'))
+            <a href="{{ route('kepala.tickets.index') }}"
+               class="text-decoration-none small text-danger">
                 <i class="bi bi-x-circle"></i> Reset Filter
             </a>
         @endif
     </div>
 
-    {{-- Tabel --}}
+    {{-- TABEL --}}
     <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead class="bg-light">
                 <tr>
-                    <th>ID TIKET</th>
-                    <th>JUDUL</th>
-                    <th>KATEGORI</th>
-                    <th>PIC</th>
-                    <th>DURASI</th>
-                    <th>STATUS</th>
-                    <th>AKSI</th>
+                    <th>ID Tiket</th>
+                    <th>Judul Kendala</th>
+                    <th>Kategori</th>
+                    <th>Prioritas</th>
+                    <th>Pelapor</th>
+                    <th>IT Support</th>
+                    <th>Status</th>
+                    <th>Waktu</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
-                @forelse($tickets as $t)
+                @forelse($tickets as $ticket)
                     <tr>
-                        <td class="fw-bold">#{{ $t->ticket_number }}</td>
-                        <td>{{ $t->title }}</td>
-                        <td>{{ $t->category->name ?? '-' }}</td>
-                        <td>{{ $t->itSupport->name ?? '-' }}</td>
-                        <td>{{ $t->created_at->diffForHumans(null, true) }}</td>
+                        <td class="fw-bold">#{{ $ticket->ticket_number }}</td>
+                        <td>{{ $ticket->title }}</td>
+                        <td>{{ $ticket->category->name ?? '-' }}</td>
+
+                        {{-- KOLOM PRIORITAS --}}
                         <td>
                             @php
-                                $sc = match($t->status) {
-                                    'Baru' => 'danger',
-                                    'Diproses' => 'warning',
-                                    'Selesai' => 'success',
-                                    'Ditutup' => 'primary',
-                                    default => 'secondary',
+                                $pc = match($ticket->priority) {
+                                    'Tinggi' => 'badge-soft-danger',
+                                    'Sedang' => 'badge-soft-warning',
+                                    default => 'badge-soft-success',
                                 };
                             @endphp
-                            <span class="badge badge-soft-{{ $sc }} rounded-pill px-3">{{ $t->status }}</span>
+                            <span class="badge {{ $pc }} rounded-pill px-3">
+                                {{ $ticket->priority }}
+                            </span>
                         </td>
+
                         <td>
-                            <a href="{{ route('kepala.tickets.show', $t->id) }}" class="text-danger small">
-                                Detail <i class="bi bi-arrow-right"></i>
+                            <i class="bi bi-person-circle me-1"></i>
+                            {{ $ticket->mentor->name ?? '-' }}
+                        </td>
+
+                        <td>
+                            @if($ticket->itSupport)
+                                <i class="bi bi-person-badge me-1"></i>
+                                {{ $ticket->itSupport->name }}
+                            @else
+                                <span class="text-muted small">Belum ditugaskan</span>
+                            @endif
+                        </td>
+
+                        {{-- KOLOM STATUS --}}
+                        <td>
+                            <span class="badge {{ $ticket->status_badge_class }} rounded-pill px-3"
+                                  title="{{ $ticket->status_label }}">
+                                <i class="bi bi-{{ $ticket->status_icon }}"></i>
+                                {{ $ticket->status_label }}
+                            </span>
+                        </td>
+
+                        <td>{{ $ticket->created_at->format('n/j/y H:i') }}</td>
+
+                        <td>
+                            <a href="{{ route('kepala.tickets.show', $ticket->id) }}"
+                               class="btn btn-sm btn-outline-dark">
+                                <i class="bi bi-eye"></i> Detail
                             </a>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">
+                        <td colspan="9" class="text-center text-muted py-4">
                             <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                            Tidak ada tiket yang cocok.
+                            @if(request('q') || request('status') || request('category_id') || request('priority'))
+                                Tidak ada tiket yang cocok dengan filter.
+                            @else
+                                Belum ada tiket.
+                            @endif
                         </td>
                     </tr>
                 @endforelse
@@ -167,8 +180,12 @@
         </table>
     </div>
 
-    {{-- Pagination --}}
-    <div class="mt-3">{{ $tickets->links() }}</div>
-
+    {{-- PAGINATION --}}
+    @if($tickets->hasPages())
+        <div class="mt-3">
+            {{ $tickets->withQueryString()->links() }}
+        </div>
+    @endif
 </div>
+
 @endsection

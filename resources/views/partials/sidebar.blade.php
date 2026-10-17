@@ -4,14 +4,16 @@
 
     if ($role === 'mentor') {
         $badgeCount = \App\Models\Ticket::where('mentor_id', $user->id)
-            ->whereIn('status', ['Baru', 'Diproses', 'Selesai'])
+            ->whereIn('status', ['Baru', 'Ditangani IT', 'Dibalas IT', 'Dibalas Mentor', 'Selesai'])
             ->count();
     } elseif ($role === 'it_support') {
         $badgeMasuk = \App\Models\Ticket::where('status', 'Baru')->count();
         $badgeDitangani = \App\Models\Ticket::where('it_support_id', $user->id)
-            ->where('status', 'Diproses')->count();
+            ->whereIn('status', ['Ditangani IT', 'Dibalas IT', 'Dibalas Mentor'])
+            ->count();
     } elseif ($role === 'kepala_it') {
-        $lateCount = \App\Models\Ticket::whereIn('status', ['Baru', 'Diproses'])
+        // FIX: pakai status baru
+        $lateCount = \App\Models\Ticket::whereIn('status', ['Baru', 'Ditangani IT', 'Dibalas IT', 'Dibalas Mentor'])
             ->whereRaw('TIMESTAMPDIFF(MINUTE, created_at, NOW()) > 120')
             ->count();
     }
@@ -80,25 +82,33 @@
 
             <small class="text-muted px-3 mt-2 mb-1" style="font-size: 0.7rem; letter-spacing: 1px;">MONITORING</small>
 
+            {{-- Dashboard --}}
             <a class="nav-link {{ request()->routeIs('kepala.dashboard') ? 'active' : '' }}"
                href="{{ route('kepala.dashboard') }}">
                 <i class="bi bi-grid-1x2 me-2"></i> Dashboard
             </a>
-            <a class="nav-link {{ request()->routeIs('kepala.monitoring.sla') ? 'active' : '' }}"
+
+            {{-- SLA IT Support (fix: gabung 2 kondisi) --}}
+            <a class="nav-link {{ request()->routeIs('kepala.monitoring') || request()->routeIs('kepala.monitoring.sla') ? 'active' : '' }}"
                href="{{ route('kepala.monitoring.sla') }}">
                 <i class="bi bi-activity me-2"></i> SLA IT Support
             </a>
-            <a class="nav-link {{ request()->routeIs('kepala.monitoring.statistik') ? 'active' : '' }}"
-               href="{{ route('kepala.monitoring.statistik') }}">
-                <i class="bi bi-graph-up-arrow me-2"></i> Statistik Kendala
+
+            {{-- Statistik Kendala (fix: tambah ikon + gabung kondisi) --}}
+            <a class="nav-link {{ request()->routeIs('kepala.statistik') || request()->routeIs('kepala.monitoring.statistik') ? 'active' : '' }}"
+               href="{{ route('kepala.statistik') }}">
+                <i class="bi bi-bar-chart-line me-2"></i> Statistik Kendala
             </a>
 
             <small class="text-muted px-3 mt-3 mb-1" style="font-size: 0.7rem; letter-spacing: 1px;">TIKET</small>
 
+            {{-- Semua Tiket --}}
             <a class="nav-link {{ request()->routeIs('kepala.tickets.index') ? 'active' : '' }}"
                href="{{ route('kepala.tickets.index') }}">
                 <i class="bi bi-ticket-detailed me-2"></i> Semua Tiket
             </a>
+
+            {{-- Tiket Lambat --}}
             <a class="nav-link {{ request()->routeIs('kepala.tickets.late') ? 'active' : '' }}"
                href="{{ route('kepala.tickets.late') }}">
                 <i class="bi bi-exclamation-triangle me-2"></i> Tiket Lambat
@@ -107,8 +117,25 @@
                 @endif
             </a>
 
+            {{-- Eskalasi (kalau ada route) --}}
+            @if(Route::has('kepala.eskalasi'))
+                <a class="nav-link {{ request()->routeIs('kepala.eskalasi') ? 'active' : '' }}"
+                   href="{{ route('kepala.eskalasi') }}">
+                    <i class="bi bi-shield-exclamation me-2"></i> Eskalasi
+                </a>
+            @endif
+
             <small class="text-muted px-3 mt-3 mb-1" style="font-size: 0.7rem; letter-spacing: 1px;">LAINNYA</small>
 
+            {{-- Notifikasi (BARU ditambahkan) --}}
+            @if(Route::has('kepala.notifications.index'))
+                <a class="nav-link {{ request()->routeIs('kepala.notifications.*') ? 'active' : '' }}"
+                   href="{{ route('kepala.notifications.index') }}">
+                    <i class="bi bi-bell me-2"></i> Notifikasi
+                </a>
+            @endif
+
+            {{-- Manajemen User --}}
             <a class="nav-link {{ request()->routeIs('kepala.users.*') ? 'active' : '' }}"
                href="{{ route('kepala.users.index') }}">
                 <i class="bi bi-people me-2"></i> Manajemen User

@@ -11,78 +11,102 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // === Statistik Utama ===
-        $total   = Ticket::count();
-        $open    = Ticket::whereIn('status', ['Baru', 'Diproses'])->count();
-        $closed  = Ticket::whereIn('status', ['Selesai', 'Ditutup'])->count();
+        // ═══ Statistik Utama ═══
+        $total = Ticket::count();
 
-        // === Rata-rata Response (menit) ===
+        // Tiket terbuka = status aktif (belum selesai/ditutup)
+        $open = Ticket::whereIn('status', [
+            'Baru',
+            'Ditangani IT',
+            'Dibalas IT',
+            'Dibalas Mentor'
+        ])->count();
+
+        $closed = Ticket::whereIn('status', ['Selesai', 'Ditutup'])->count();
+
+        // Rata-rata respon pertama (menit)
         $avgResponse = Ticket::whereNotNull('first_response_at')
             ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_response_at)) as m')
             ->value('m') ?? 0;
 
-        // === SLA Keseluruhan ===
-        $slaCompliant = Ticket::whereNotNull('resolved_at')
-            ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, resolved_at) <= 24')
+        // ═══ SLA (%) — Berdasarkan target respon ≤ 30 menit (sesuai PRD) ═══
+        $totalRespon = Ticket::whereNotNull('first_response_at')->count();
+        $slaOk = Ticket::whereNotNull('first_response_at')
+            ->whereRaw('TIMESTAMPDIFF(MINUTE, created_at, first_response_at) <= 30')
             ->count();
-        $slaPercent = $closed > 0 ? round(($slaCompliant / $closed) * 100, 1) : 0;
+        $slaPercent = $totalRespon > 0
+            ? round(($slaOk / $totalRespon) * 100, 2)
+            : 0;
 
-        // === Performa SLA IT Support ===
-        $itSupports = User::where('role', 'it_support')->get()->map(function ($u) {
-            $avg = Ticket::where('it_support_id', $u->id)
-                ->whereNotNull('first_response_at')
-                ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_response_at)) as m')
-                ->value('m') ?? 0;
+        // ═══ Performa per IT Support ═══
+        $itSupports = User::where('role', 'it_support')
+            ->get()
+            ->map(function ($it) {
+                // Total tiket dengan respon
+                $totalTiket = Ticket::where('it_support_id', $it->id)
+                    ->whereNotNull('first_response_at')
+                    ->count();
 
-            $handled = Ticket::where('it_support_id', $u->id)
-                ->whereIn('status', ['Selesai', 'Ditutup'])->count();
+                // Tiket yang responnya ≤ 30 menit
+                $slaOk = Ticket::where('it_support_id', $it->id)
+                    ->whereNotNull('first_response_at')
+                    ->whereRaw('TIMESTAMPDIFF(MINUTE, created_at, first_response_at) <= 30')
+                    ->count();
 
-            $slaOk = Ticket::where('it_support_id', $u->id)
-                ->whereNotNull('resolved_at')
-                ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, resolved_at) <= 24')
-                ->count();
+                // Rata-rata waktu respon
+                $avg = Ticket::where('it_support_id', $it->id)
+                    ->whereNotNull('first_response_at')
+                    ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_response_at)) as m')
+                    ->value('m') ?? 0;
 
-            $slaPct = $handled > 0 ? round(($slaOk / $handled) * 100) : 0;
+                // Setup atribut tambahan
+                $it->initial = strtoupper(substr($it->name, 0, 2));
+                $it->sla_percentage = $totalTiket > 0
+                    ? round(($slaOk / $totalTiket) * 100, 2)
+                    : 0;
+                $it->avg_response = round($avg, 2) . ' menit';
 
-            // Tentukan label & class warna
-            if ($slaPct >= 95) {
-                $status = 'Sangat Cepat'; $class = 'success';
-            } elseif ($slaPct >= 90) {
-                $status = 'On Track';     $class = 'primary';
-            } elseif ($slaPct >= 85) {
-                $status = 'Mendekati Target'; $class = 'warning';
-            } else {
-                $status = 'Perlu Perhatian';  $class = 'danger';
-            }
+                // Status berdasarkan SLA %
+                $it->status = $it->sla_percentage >= 90
+                    ? 'Excellent'
+                    : ($it->sla_percentage >= 75 ? 'Baik' : 'Perlu Perbaikan');
 
-            return (object) [
-                'name'           => $u->name,
-                'initial'        => strtoupper(substr($u->name, 0, 2)),
-                'avg_response'   => round($avg) . ' mnt',
-                'handled'        => $handled,
-                'sla_percentage' => $slaPct,
-                'status'         => $status,
-                'status_class'   => $class,
-            ];
-        });
+                $it->status_class = $it->sla_percentage >= 90
+                    ? 'success'
+                    : ($it->sla_percentage >= 75 ? 'warning' : 'danger');
 
-        // === Top 5 Kategori ===
-        $topCategories = Ticket::select('category_id', DB::raw('COUNT(*) as total'))
-            ->groupBy('category_id')
-            ->with('category')
-            ->orderBy('total', 'desc')
+                return $it;
+            });
+
+        // ═══ Kategori Populer (Top 5) ═══
+        $kategoriPopuler = DB::table('tickets')
+            ->join('categories', 'tickets.category_id', '=', 'categories.id')
+            ->select('categories.name', DB::raw('COUNT(*) as jumlah'))
+            ->groupBy('categories.name')
+            ->orderByDesc('jumlah')
             ->limit(5)
             ->get();
 
-        // === Tiket Lambat (> 2 jam / 120 menit) ===
+        // ═══ Tiket Lambat (> 120 menit / 2 jam belum selesai) ═══
         $lateTickets = Ticket::with(['mentor', 'itSupport', 'category'])
-            ->whereIn('status', ['Baru', 'Diproses'])
+            ->whereIn('status', ['Baru', 'Ditangani IT', 'Dibalas IT', 'Dibalas Mentor'])
             ->whereRaw('TIMESTAMPDIFF(MINUTE, created_at, NOW()) > 120')
             ->orderByRaw("FIELD(priority, 'Tinggi', 'Sedang', 'Rendah')")
             ->orderBy('created_at', 'asc')
             ->limit(5)
             ->get();
 
+        // ═══ Distribusi Status (untuk Chart di View) ═══
+        $statusDistribusi = [
+            'Baru' => Ticket::where('status', 'Baru')->count(),
+            'Ditangani IT' => Ticket::where('status', 'Ditangani IT')->count(),
+            'Dibalas IT' => Ticket::where('status', 'Dibalas IT')->count(),
+            'Dibalas Mentor' => Ticket::where('status', 'Dibalas Mentor')->count(),
+            'Selesai' => Ticket::where('status', 'Selesai')->count(),
+            'Ditutup' => Ticket::where('status', 'Ditutup')->count(),
+        ];
+
+        // ═══ Kirim ke View ═══
         return view('kepala-it.dashboard', compact(
             'total',
             'open',
@@ -90,8 +114,9 @@ class DashboardController extends Controller
             'avgResponse',
             'slaPercent',
             'itSupports',
-            'topCategories',
-            'lateTickets'
+            'kategoriPopuler',
+            'lateTickets',
+            'statusDistribusi'      // ← WAJIB dikirim (dipakai chart)
         ));
     }
 }

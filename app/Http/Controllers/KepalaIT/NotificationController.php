@@ -3,20 +3,24 @@
 namespace App\Http\Controllers\KepalaIT;
 
 use App\Http\Controllers\Controller;
-use App\Models\Ticket;
+use App\Models\Notification;
 
 class NotificationController extends Controller
 {
     public function index()
     {
-        // Tiket lambat (>2 jam) dan belum selesai
-        $lateTickets = Ticket::with(['mentor', 'itSupport', 'category'])
-            ->whereIn('status', ['Baru', 'Diproses'])
-            ->whereRaw('TIMESTAMPDIFF(MINUTE, created_at, NOW()) > 120')
-            ->orderByRaw("FIELD(priority, 'Tinggi', 'Sedang', 'Rendah')")
-            ->orderBy('created_at', 'asc')
+        $userId = auth()->id();
+
+        $notifications = Notification::where('user_id', $userId)
+            ->with(['ticket', 'sender'])
+            ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('kepala-it.notifications.index', compact('lateTickets'));
+        // Mark as read
+        Notification::where('user_id', $userId)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return view('kepala-it.notifications.index', compact('notifications'));
     }
 }
