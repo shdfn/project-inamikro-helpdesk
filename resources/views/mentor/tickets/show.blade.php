@@ -4,7 +4,9 @@
 
 @section('konten')
 
+{{-- ═══════════════════════════════════════════ --}}
 {{-- HEADER TIKET --}}
+{{-- ═══════════════════════════════════════════ --}}
 <div class="mb-3">
     <a href="{{ route('mentor.tickets.index') }}" class="text-decoration-none text-muted">
         <i class="bi bi-arrow-left"></i> Kembali ke Tiket Saya
@@ -19,10 +21,11 @@
     </div>
 </div>
 
-<!-- ⚠️ PENTING: ROW DIMULAI DI SINI -->
 <div class="row g-4">
 
-    <!-- ⚠️ KOLOM KIRI DIMULAI -->
+    {{-- ═══════════════════════════════════════════ --}}
+    {{-- KOLOM KIRI --}}
+    {{-- ═══════════════════════════════════════════ --}}
     <div class="col-md-7">
 
         {{-- INFORMASI TIKET --}}
@@ -63,164 +66,214 @@
             </table>
         </div>
 
-        {{-- DESKRIPSI KENDALA --}}
-        <div class="card card-custom p-4 mb-4">
-            <h5 class="fw-bold mb-3">Deskripsi Kendala</h5>
-            <div class="border rounded p-3 bg-light">
-                {{ $ticket->description }}
-            </div>
-
-            @if($ticket->attachment)
-                <h5 class="fw-bold mt-4 mb-3">Lampiran</h5>
-                <div class="border rounded p-3 d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-file-earmark-image fs-3 me-2 text-secondary"></i>
-                        <span>{{ basename($ticket->attachment) }}</span>
-                    </div>
-                    <a href="{{ asset('storage/' . $ticket->attachment) }}" download class="text-decoration-none">
-                        <i class="bi bi-download"></i>
-                    </a>
-                </div>
-            @endif
-        </div>
-
-        {{-- DISKUSI --}}
+        {{-- DISKUSI (DENGAN AREA SCROLL) --}}
         <div class="card card-custom p-4">
-            <h5 class="fw-bold mb-4"><i class="bi bi-chat-left-text"></i> Diskusi</h5>
+            <h5 class="fw-bold mb-3"><i class="bi bi-chat-left-text"></i> Diskusi</h5>
 
-            {{-- Deskripsi di atas --}}
-            <div class="d-flex mb-3">
-                <div class="me-2">
-                    <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center"
-                         style="width: 40px; height: 40px;">
-                        <i class="bi bi-file-text"></i>
-                    </div>
-                </div>
-                <div class="p-3 rounded-3 bg-light border-start border-4 border-danger flex-grow-1" style="max-width: 85%;">
-                    <small class="d-block mb-1 fw-bold text-danger">
-                        <i class="bi bi-pin-angle-fill"></i> Deskripsi Kendala Awal
-                    </small>
-                    <small class="d-block mb-2 text-muted">
-                        {{ $ticket->mentor->name ?? 'Mentor' }} — {{ $ticket->created_at->format('d M Y, H:i') }}
-                    </small>
-                    <div class="mt-2">{{ $ticket->description }}</div>
-                </div>
-            </div>
+            {{-- ⭐ AREA CHAT (SCROLLABLE) — Max Height 450px --}}
+            <div class="chat-area" style="max-height: 450px; overflow-y: auto; padding-right: 8px;">
 
-            {{-- Pesan diskusi --}}
-            @foreach($ticket->messages as $msg)
-                @if($msg->user_id === auth()->id())
-                    <div class="d-flex mb-3 justify-content-end">
-                        <div class="p-3 rounded-3" style="max-width: 80%; background-color: #f4c7c9;">
-                            <small class="d-block text-end mb-1 fw-bold">(Anda) {{ $msg->user->name }}</small>
-                            <small class="d-block text-end mb-2 text-muted" style="font-size: 0.7rem;">{{ $msg->created_at->format('d M Y H:i') }}</small>
-                            {{ $msg->message }}
-                            @if($msg->attachment)
-                                <div class="mt-2 pt-2 border-top">
-                                    <a href="{{ asset('storage/' . $msg->attachment) }}" download class="text-dark small text-decoration-none">
-                                        <i class="bi bi-paperclip"></i> {{ basename($msg->attachment) }}
-                                    </a>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="ms-2">
-                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="bi bi-person-fill"></i>
-                            </div>
+                {{-- DESKRIPSI KENDALA AWAL --}}
+                <div class="d-flex mb-3">
+                    <div class="me-2">
+                        <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center"
+                            style="width: 40px; height: 40px;">
+                            <i class="bi bi-file-text"></i>
                         </div>
                     </div>
-                @else
-                    <div class="d-flex mb-3">
-                        <div class="me-2">
-                            <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="bi bi-person-fill"></i>
+                    <div class="p-3 rounded-3 bg-light border-start border-4 border-danger flex-grow-1"
+                        style="max-width: 85%;">
+                        <small class="d-block mb-1 fw-bold text-danger">
+                            <i class="bi bi-pin-angle-fill"></i> Deskripsi Kendala Awal
+                        </small>
+                        <small class="d-block mb-2 text-muted">
+                            {{ $ticket->mentor->name ?? 'Mentor' }} — {{ $ticket->created_at->format('d M Y, H:i') }}
+                        </small>
+                        <div class="mt-2">
+                            {{ $ticket->description }}
+                        </div>
+
+                        @if($ticket->attachment)
+                            <div class="mt-2 pt-2 border-top border-danger">
+                                <a href="{{ asset('storage/' . $ticket->attachment) }}" download
+                                class="text-dark small text-decoration-none">
+                                    <i class="bi bi-paperclip"></i> {{ basename($ticket->attachment) }}
+                                </a>
                             </div>
-                        </div>
-                        <div class="p-3 rounded-3 bg-light" style="max-width: 80%;">
-                            <small class="d-block mb-1 fw-bold">{{ $msg->user->name ?? 'User' }} (IT Support)</small>
-                            <small class="d-block mb-2 text-muted" style="font-size: 0.7rem;">{{ $msg->created_at->format('d M Y H:i') }}</small>
-                            {{ $msg->message }}
-                            @if($msg->attachment)
-                                <div class="mt-2 pt-2 border-top">
-                                    <a href="{{ asset('storage/' . $msg->attachment) }}" download class="text-dark small text-decoration-none">
-                                        <i class="bi bi-paperclip"></i> {{ basename($msg->attachment) }}
-                                    </a>
-                                </div>
-                            @endif
-                        </div>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- PEMISAH --}}
+                @if($ticket->messages->count() > 0)
+                    <hr class="my-3">
+                    <div class="text-center mb-3">
+                        <small class="text-muted">
+                            <i class="bi bi-chat-dots"></i>
+                            {{ $ticket->messages->count() }} pesan diskusi
+                        </small>
                     </div>
                 @endif
-            @endforeach
 
-            {{-- FORM KIRIM PESAN --}}
-            @if($ticket->status !== 'Ditutup')
-                <form action="{{ route('mentor.tickets.message', $ticket->id) }}" method="POST"
-                      enctype="multipart/form-data" class="mt-4">
-                    @csrf
-                    <div class="input-group">
-                        <label for="fileInput" class="input-group-text bg-white border-end-0" style="cursor: pointer;">
-                            <i class="bi bi-paperclip"></i>
-                        </label>
-                        <input type="file" id="fileInput" name="attachment" class="d-none">
-                        <input type="text" name="message" class="form-control border-start-0"
-                               placeholder="Tulis pesan..." required>
-                        <button class="btn btn-inamikro" type="submit">
-                            <i class="bi bi-send"></i> Kirim
-                        </button>
+                {{-- PESAN DISKUSI (TERBARU DI ATAS) --}}
+                @forelse($ticket->messages as $msg)
+                    @if($msg->user_id === auth()->id())
+                        {{-- Pesan dari diri sendiri (kanan) --}}
+                        <div class="d-flex mb-3 justify-content-end">
+                            <div class="p-3 rounded-3" style="max-width: 80%; background-color: #f4c7c9;">
+                                <small class="d-block text-end mb-1 fw-bold">
+                                    (Anda) {{ $msg->user->name }}
+                                </small>
+                                <small class="d-block text-end mb-2 text-muted" style="font-size: 0.7rem;">
+                                    {{ $msg->created_at->format('d M Y H:i') }}
+                                </small>
+                                {{ $msg->message }}
+                                @if($msg->attachment)
+                                    <div class="mt-2 pt-2 border-top">
+                                        <a href="{{ asset('storage/' . $msg->attachment) }}" download
+                                           class="text-dark small text-decoration-none">
+                                            <i class="bi bi-paperclip"></i> {{ basename($msg->attachment) }}
+                                        </a>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="ms-2">
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                     style="width: 40px; height: 40px;">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        {{-- Pesan dari IT Support (kiri) --}}
+                        <div class="d-flex mb-3">
+                            <div class="me-2">
+                                <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center"
+                                     style="width: 40px; height: 40px;">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                            </div>
+                            <div class="p-3 rounded-3 bg-light" style="max-width: 80%;">
+                                <small class="d-block mb-1 fw-bold">
+                                    {{ $msg->user->name ?? 'User' }} (IT Support)
+                                </small>
+                                <small class="d-block mb-2 text-muted" style="font-size: 0.7rem;">
+                                    {{ $msg->created_at->format('d M Y H:i') }}
+                                </small>
+                                {{ $msg->message }}
+                                @if($msg->attachment)
+                                    <div class="mt-2 pt-2 border-top">
+                                        <a href="{{ asset('storage/' . $msg->attachment) }}" download
+                                           class="text-dark small text-decoration-none">
+                                            <i class="bi bi-paperclip"></i> {{ basename($msg->attachment) }}
+                                        </a>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+                @empty
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-chat-dots fs-2"></i>
+                        <p class="mb-0 mt-2 small">Belum ada balasan dari IT Support.</p>
                     </div>
-                    <small id="fileName" class="text-muted"></small>
-                </form>
+                @endforelse
+            </div> {{-- END AREA CHAT --}}
+
+            {{-- FORM KIRIM PESAN (STICKY BOTTOM) --}}
+            @if($ticket->status !== 'Ditutup')
+                <div class="mt-3 pt-3 border-top">
+                    <form action="{{ route('mentor.tickets.message', $ticket->id) }}" method="POST"
+                          enctype="multipart/form-data">
+                        @csrf
+                        <div class="input-group">
+                            <label for="fileInput" class="input-group-text bg-white border-end-0" style="cursor: pointer;">
+                                <i class="bi bi-paperclip"></i>
+                            </label>
+                            <input type="file" id="fileInput" name="attachment" class="d-none">
+                            <input type="text" name="message" class="form-control border-start-0"
+                                   placeholder="Tulis pesan..." required>
+                            <button class="btn btn-inamikro" type="submit">
+                                <i class="bi bi-send"></i> Kirim
+                            </button>
+                        </div>
+                        <small id="fileName" class="text-muted d-block mt-1"></small>
+                    </form>
+                </div>
+            @else
+                <div class="mt-3 pt-3 border-top">
+                    <div class="alert alert-secondary mb-0 text-center">
+                        <i class="bi bi-lock-fill"></i>
+                        <small>Tiket sudah ditutup. Diskusi tidak dapat dilanjutkan.</small>
+                    </div>
+                </div>
             @endif
         </div>
 
     </div>
-    <!-- ⚠️ PENTING: KOLOM KIRI DITUTUP DI SINI -->
 
-    <!-- ⚠️ KOLOM KANAN DIMULAI -->
+    {{-- ═══════════════════════════════════════════ --}}
+    {{-- KOLOM KANAN --}}
+    {{-- ═══════════════════════════════════════════ --}}
     <div class="col-md-5">
 
         {{-- TIMELINE SLA --}}
         <div class="card card-custom p-4 mb-4">
             <h5 class="fw-bold mb-4">Timeline SLA</h5>
-            <div class="position-relative ps-4 border-start border-2" style="border-color: #d81b21 !important; margin-left: 10px;">
-                <div class="mb-4 position-relative">
-                    <div class="position-absolute rounded-circle" style="width: 15px; height: 15px; left: -31px; top: 5px; background-color: #d81b21;"></div>
-                    <div class="fw-bold text-danger">Tiket Masuk</div>
-                    <small class="text-muted">{{ $ticket->created_at->format('d M Y, H:i') }}</small>
+            
+            <div class="timeline-container ps-3">
+                
+                {{-- 1. Tiket Masuk (Selalu Merah) --}}
+                <div class="timeline-item is-active position-relative pb-4">
+                    <div class="timeline-dot is-active position-absolute"></div>
+                    <div class="fw-bold text-danger ms-3">Tiket Masuk</div>
+                    <div class="text-muted ms-3" style="font-size: 0.8rem;">
+                        {{ $ticket->created_at->format('d M Y, H:i') }}
+                    </div>
                 </div>
-                <div class="mb-4 position-relative">
-                    <div class="position-absolute rounded-circle" style="width: 15px; height: 15px; left: -31px; top: 5px; background-color: {{ $ticket->first_response_at ? '#d81b21' : '#dee2e6' }};"></div>
-                    <div class="{{ $ticket->first_response_at ? 'fw-bold text-danger' : 'text-muted' }}">Respon Pertama</div>
-                    @if($ticket->first_response_at)
-                        <small class="text-muted">{{ $ticket->first_response_at->format('d M Y, H:i') }}</small>
-                    @else
-                        <small class="text-muted">Menunggu IT Support</small>
-                    @endif
+
+                {{-- 2. Respon Pertama --}}
+                @php $isRespon = $ticket->first_response_at ? true : false; @endphp
+                <div class="timeline-item {{ $isRespon ? 'is-active' : '' }} position-relative pb-4">
+                    <div class="timeline-dot {{ $isRespon ? 'is-active' : '' }} position-absolute"></div>
+                    <div class="{{ $isRespon ? 'fw-bold text-danger' : 'text-muted' }} ms-3">
+                        Respon Pertama
+                    </div>
+                    <div class="text-muted ms-3" style="font-size: 0.8rem;">
+                        {{ $isRespon ? $ticket->first_response_at->format('d M Y, H:i') : 'Belum ada respon' }}
+                    </div>
                 </div>
-                <div class="mb-4 position-relative">
-                    <div class="position-absolute rounded-circle" style="width: 15px; height: 15px; left: -31px; top: 5px; background-color: {{ in_array($ticket->status, ['Selesai', 'Ditutup']) ? '#d81b21' : '#dee2e6' }};"></div>
-                    <div class="{{ in_array($ticket->status, ['Selesai', 'Ditutup']) ? 'fw-bold text-danger' : 'text-muted' }}">Penanganan Selesai</div>
-                    @if($ticket->resolved_at)
-                        <small class="text-muted">{{ $ticket->resolved_at->format('d M Y, H:i') }}</small>
-                    @else
-                        <small class="text-muted">Belum selesai</small>
-                    @endif
+
+                {{-- 3. Penanganan Selesai --}}
+                @php $isSelesai = in_array($ticket->status, ['Selesai', 'Ditutup']) ? true : false; @endphp
+                <div class="timeline-item {{ $isSelesai ? 'is-active' : '' }} position-relative pb-4">
+                    <div class="timeline-dot {{ $isSelesai ? 'is-active' : '' }} position-absolute"></div>
+                    <div class="{{ $isSelesai ? 'fw-bold text-danger' : 'text-muted' }} ms-3">
+                        Penanganan Selesai
+                    </div>
+                    <div class="text-muted ms-3" style="font-size: 0.8rem;">
+                        {{ $ticket->resolved_at ? $ticket->resolved_at->format('d M Y, H:i') : 'Belum selesai' }}
+                    </div>
                 </div>
-                <div class="position-relative">
-                    <div class="position-absolute rounded-circle" style="width: 15px; height: 15px; left: -31px; top: 5px; background-color: {{ $ticket->status === 'Ditutup' ? '#d81b21' : '#dee2e6' }};"></div>
-                    <div class="{{ $ticket->status === 'Ditutup' ? 'fw-bold text-danger' : 'text-muted' }}">Ditutup</div>
-                    @if($ticket->status === 'Ditutup')
-                        <small class="text-muted">Dikonfirmasi Mentor</small>
-                    @else
-                        <small class="text-muted">Belum ditutup</small>
-                    @endif
+
+                {{-- 4. Ditutup --}}
+                @php $isTutup = $ticket->status === 'Ditutup' ? true : false; @endphp
+                <div class="timeline-item {{ $isTutup ? 'is-active' : '' }} position-relative">
+                    <div class="timeline-dot {{ $isTutup ? 'is-active' : '' }} position-absolute"></div>
+                    <div class="{{ $isTutup ? 'fw-bold text-danger' : 'text-muted' }} ms-3">
+                        Ditutup
+                    </div>
+                    <div class="text-muted ms-3" style="font-size: 0.8rem;">
+                        {{ $isTutup ? 'Dikonfirmasi Mentor' : 'Belum ditutup' }}
+                    </div>
                 </div>
+
             </div>
         </div>
-
+        
         {{-- KONFIRMASI PENYELESAIAN --}}
         @if($ticket->status === 'Selesai')
-            <div class="card card-custom p-4 border-start border-4 border-success">
+            <div class="card card-custom p-4 border-start border-4 border-success mb-4">
                 <div class="text-center">
                     <i class="bi bi-patch-question text-success fs-1"></i>
                     <h5 class="fw-bold mt-2">Konfirmasi Penyelesaian</h5>
@@ -288,14 +341,21 @@
         @endif
 
     </div>
-    <!-- ⚠️ PENTING: KOLOM KANAN DITUTUP DI SINI -->
 
 </div>
-<!-- ⚠️ PENTING: ROW DITUTUP DI SINI -->
 
 <script>
     document.getElementById('fileInput')?.addEventListener('change', function(e) {
         document.getElementById('fileName').textContent = e.target.files[0]?.name ?? '';
+    });
+
+    // Auto-scroll ke bawah saat chat dibuka (opsional)
+    document.addEventListener('DOMContentLoaded', function () {
+        const chatArea = document.querySelector('.chat-area');
+        if (chatArea) {
+            // Karena pesan terbaru di atas, scroll ke paling atas
+            chatArea.scrollTop = 0;
+        }
     });
 </script>
 

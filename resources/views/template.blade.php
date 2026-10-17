@@ -209,6 +209,54 @@
         ::-webkit-scrollbar-track {
             background-color: #f1f1f1;
         }
+
+        /* TIMELINE SLA */
+        /* Custom Timeline SLA */
+        .timeline-container {
+            position: relative;
+            margin-left: 8px;
+        }
+        .timeline-item {
+            position: relative;
+        }
+        /* Garis default (abu-abu) */
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            bottom: -5px;
+            left: 5px;
+            width: 2px;
+            background-color: #e0e0e0; /* Abu-abu */
+            z-index: 1;
+        }
+
+        /* ⭐ KUNCI: Jika item ini punya class 'is-active', garisnya jadi merah */
+        .timeline-item.is-active::before {
+            background-color: #d81b21;
+        }
+
+        /* Hilangkan garis di item terakhir */
+        .timeline-item:last-child::before {
+            display: none;
+        }
+
+        /* Bulatan default (abu-abu) */
+        .timeline-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            left: 0;
+            top: 5px;
+            z-index: 2;
+            background-color: #6c757d; /* Abu-abu */
+        }
+
+        /* Bulatan jika aktif (merah) */
+        .timeline-dot.is-active {
+            background-color: #d81b21;
+        }
+        
     </style>
 </head>
 <body>
