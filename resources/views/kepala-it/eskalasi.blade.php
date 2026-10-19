@@ -16,51 +16,69 @@
     </a>
 </div>
 
-{{-- KARTU METRIK --}}
+{{-- ═══ KARTU METRIK ═══ --}}
 <div class="row g-3 mb-4">
+    {{-- Total Eskalasi --}}
     <div class="col-md-4">
-        <div class="card card-custom p-3">
-            <div class="d-flex justify-content-between">
+        <div class="card card-custom p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
                 <small class="text-muted fw-bold">TOTAL ESKALASI</small>
-                <i class="bi bi-exclamation-triangle text-danger fs-4"></i>
+                <i class="bi bi-exclamation-triangle text-danger fs-5"></i>
             </div>
-            <h2 class="fw-bold mt-2 mb-0">{{ $totalEskalasi }}</h2>
-            <small class="text-danger">
-                <i class="bi bi-arrow-up"></i> Butuh tindakan segera
-            </small>
+            <div class="d-flex flex-column justify-content-between h-100 mt-2">
+                <h2 class="fw-bold mb-1">{{ $totalEskalasi }}</h2>
+                <small class="text-danger">
+                    <i class="bi bi-arrow-up"></i> Butuh tindakan segera
+                </small>
+            </div>
         </div>
     </div>
+
+    {{-- SLA Tercapai --}}
     <div class="col-md-4">
-        <div class="card card-custom p-3">
-            <div class="d-flex justify-content-between">
+        <div class="card card-custom p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
                 <small class="text-muted fw-bold">SLA TERCAPAI</small>
-                <i class="bi bi-check-circle text-success fs-4"></i>
+                <i class="bi bi-check-circle text-success fs-5"></i>
             </div>
-            <h2 class="fw-bold mt-2 mb-0">{{ $persenSLA }}%</h2>
-            <small class="text-muted">Target ≥ 90%</small>
+            <div class="d-flex flex-column justify-content-between h-100 mt-2">
+                <h2 class="fw-bold mb-1">{{ $persenSLA }}%</h2>
+                <small class="text-muted">Target ≥ 90%</small>
+            </div>
         </div>
     </div>
+
+    {{-- Status --}}
     <div class="col-md-4">
-        <div class="card card-custom p-3">
-            <div class="d-flex justify-content-between">
+        <div class="card card-custom p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
                 <small class="text-muted fw-bold">STATUS</small>
                 @if($totalEskalasi > 5)
-                    <i class="bi bi-x-circle text-danger fs-4"></i>
+                    <i class="bi bi-x-circle text-danger fs-5"></i>
                 @elseif($totalEskalasi > 0)
-                    <i class="bi bi-exclamation-circle text-warning fs-4"></i>
+                    <i class="bi bi-exclamation-circle text-warning fs-5"></i>
                 @else
-                    <i class="bi bi-check-circle text-success fs-4"></i>
+                    <i class="bi bi-check-circle text-success fs-5"></i>
                 @endif
             </div>
-            <h2 class="fw-bold mt-2 mb-0">
-                @if($totalEskalasi > 5)
-                    <span class="text-danger">Perlu Tindakan</span>
-                @elseif($totalEskalasi > 0)
-                    <span class="text-warning">Pantau</span>
-                @else
-                    <span class="text-success">Aman</span>
-                @endif
-            </h2>
+            <div class="d-flex flex-column justify-content-between h-100 mt-2">
+                <h2 class="fw-bold mb-1">
+                    @if($totalEskalasi > 5)
+                        <span class="text-danger">Perlu Tindakan</span>
+                    @elseif($totalEskalasi > 0)
+                        <span class="text-warning">Pantau</span>
+                    @else
+                        <span class="text-success">Aman</span>
+                    @endif
+                </h2>
+                <small class="text-muted">
+                    @if($totalEskalasi > 0)
+                        {{ $totalEskalasi }} tiket kritis
+                    @else
+                        Semua tiket dalam SLA
+                    @endif
+                </small>
+            </div>
         </div>
     </div>
 </div>
