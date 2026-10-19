@@ -177,12 +177,16 @@
         .mt-3 { margin-top: 0.75rem !important; }
 
         /* ═══════════════════════════════════════════ */
-        /* ALERT (Notifikasi)                          */
+        /* ALERT (Notifikasi) — RAPI                   */
         /* ═══════════════════════════════════════════ */
         .alert {
             font-size: 0.85rem;
             padding: 10px 14px;
             border-radius: 8px;
+        }
+        /* Menyeimbangkan tombol close agar tidak terlalu menempel */
+        .alert-dismissible .btn-close {
+            padding: 0.75rem 1rem;
         }
 
         /* ═══════════════════════════════════════════ */
@@ -210,8 +214,9 @@
             background-color: #f1f1f1;
         }
 
-        /* TIMELINE SLA */
-        /* Custom Timeline SLA */
+        /* ═══════════════════════════════════════════ */
+        /* TIMELINE SLA — Custom                       */
+        /* ═══════════════════════════════════════════ */
         .timeline-container {
             position: relative;
             margin-left: 8px;
@@ -230,17 +235,14 @@
             background-color: #e0e0e0; /* Abu-abu */
             z-index: 1;
         }
-
         /* ⭐ KUNCI: Jika item ini punya class 'is-active', garisnya jadi merah */
         .timeline-item.is-active::before {
             background-color: #d81b21;
         }
-
         /* Hilangkan garis di item terakhir */
         .timeline-item:last-child::before {
             display: none;
         }
-
         /* Bulatan default (abu-abu) */
         .timeline-dot {
             width: 12px;
@@ -251,12 +253,10 @@
             z-index: 2;
             background-color: #6c757d; /* Abu-abu */
         }
-
         /* Bulatan jika aktif (merah) */
         .timeline-dot.is-active {
             background-color: #d81b21;
         }
-        
     </style>
 </head>
 <body>
@@ -276,28 +276,34 @@
             {{-- CONTENT --}}
             <div class="p-3">
 
-                {{-- ═══ NOTIFIKASI ═══ --}}
+                {{-- ═══ NOTIFIKASI (Diperbaiki) ═══ --}}
                 @if(session('success'))
-                    <div class="alert alert-success alert-dismissible fade show d-flex align-items-center" role="alert">
-                        <i class="bi bi-check-circle-fill me-2"></i>
-                        <div>{{ session('success') }}</div>
-                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <div class="alert alert-success alert-dismissible fade show d-flex align-items-center justify-content-between" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            <div>{{ session('success') }}</div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 @endif
 
                 @if(session('error'))
-                    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center" role="alert">
-                        <i class="bi bi-exclamation-circle-fill me-2"></i>
-                        <div>{{ session('error') }}</div>
-                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center justify-content-between" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-exclamation-circle-fill me-2"></i>
+                            <div>{{ session('error') }}</div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 @endif
 
                 @if(session('status'))
-                    <div class="alert alert-info alert-dismissible fade show d-flex align-items-center" role="alert">
-                        <i class="bi bi-info-circle-fill me-2"></i>
-                        <div>{{ session('status') }}</div>
-                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <div class="alert alert-info alert-dismissible fade show d-flex align-items-center justify-content-between" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            <div>{{ session('status') }}</div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 @endif
 
