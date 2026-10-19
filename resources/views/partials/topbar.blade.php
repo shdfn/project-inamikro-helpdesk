@@ -3,7 +3,7 @@
     $notifCount = 0;
     $notifUrl = '#';
 
-    // ⭐ SEMUA ROLE menghitung dari tabel notifications (SAMA dengan Sidebar & Controller)
+    // === Notifikasi per role (Sinkron dengan Sidebar) ===
     if ($role === 'mentor') {
         $notifCount = \App\Models\Notification::where('user_id', auth()->id())
             ->where('is_read', false)->count();
@@ -13,7 +13,6 @@
             ->where('is_read', false)->count();
         $notifUrl = route('it.notifications.index');
     } elseif ($role === 'kepala_it') {
-        // FIX: Jangan hitung tiket lambat, hitung dari tabel notifications
         $notifCount = \App\Models\Notification::where('user_id', auth()->id())
             ->where('is_read', false)->count();
         $notifUrl = route('kepala.notifications.index');
@@ -26,18 +25,49 @@
         'kepala_it' => route('kepala.tickets.index'),
         default     => '#',
     };
+
+    // ⭐ BREADCRUMB DINAMIS (Menyesuaikan Menu Sidebar) ⭐
+    $breadcrumbTitle = '';
+    if ($role === 'mentor') {
+        $breadcrumbTitle = match(true) {
+            request()->routeIs('mentor.dashboard') => 'Dashboard Utama',
+            request()->routeIs('mentor.tickets.create') => 'Lapor Kendala Baru',
+            request()->routeIs('mentor.tickets.index', 'mentor.tickets.show') => 'Tiket Saya',
+            request()->routeIs('mentor.notifications.*') => 'Notifikasi',
+            default => 'Helpdesk'
+        };
+    } elseif ($role === 'it_support') {
+        $breadcrumbTitle = match(true) {
+            request()->routeIs('it.dashboard') => 'Dashboard & Antrean',
+            request()->routeIs('it.tickets.incoming') => 'Tiket Masuk',
+            request()->routeIs('it.tickets.my') => 'Tiket Ditangani Saya',
+            request()->routeIs('it.tickets.history') => 'Riwayat & Arsip',
+            request()->routeIs('it.notifications.*') => 'Notifikasi',
+            default => 'Helpdesk'
+        };
+    } elseif ($role === 'kepala_it') {
+        $breadcrumbTitle = match(true) {
+            request()->routeIs('kepala.dashboard') => 'Dashboard',
+            request()->routeIs('kepala.monitoring*') => 'SLA IT Support',
+            request()->routeIs('kepala.statistik') => 'Statistik Kendala',
+            request()->routeIs('kepala.tickets.index', 'kepala.tickets.show') => 'Semua Tiket',
+            request()->routeIs('kepala.tickets.late') => 'Tiket Lambat',
+            request()->routeIs('kepala.eskalasi') => 'Eskalasi',
+            request()->routeIs('kepala.notifications.*') => 'Notifikasi',
+            request()->routeIs('kepala.users.*') => 'Manajemen User',
+            default => 'Helpdesk'
+        };
+    }
 @endphp
 
-<div class="bg-white border-bottom p-3">
+<div class="p-3">
     <div class="d-flex justify-content-between align-items-center gap-3">
 
-        {{-- KIRI: Breadcrumb (khusus Kepala IT) --}}
+        {{-- KIRI: Breadcrumb Dinamis --}}
         <div class="flex-shrink-0">
-            @if($role === 'kepala_it')
-                <small class="text-muted">
-                    HELPDESK / <span class="fw-bold text-dark">@yield('breadcrumb', 'Monitoring Eksekutif')</span>
-                </small>
-            @endif
+            <small class="text-muted">
+                HELPDESK / <span class="fw-bold text-dark">{{ $breadcrumbTitle }}</span>
+            </small>
         </div>
 
         {{-- TENGAH: Search Bar (semua role) --}}
