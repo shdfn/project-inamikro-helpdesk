@@ -24,10 +24,20 @@ class DashboardController extends Controller
 
         $closed = Ticket::whereIn('status', ['Selesai', 'Ditutup'])->count();
 
-        // Rata-rata respon pertama (menit)
-        $avgResponse = Ticket::whereNotNull('first_response_at')
+        // Rata-rata respon pertama (format otomatis)
+        $avgResponseRaw = Ticket::whereNotNull('first_response_at')
             ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_response_at)) as m')
             ->value('m') ?? 0;
+
+        if ($avgResponseRaw < 60) {
+            $avgResponse = round($avgResponseRaw, 2) . ' menit';
+        } elseif ($avgResponseRaw < 1440) {
+            $avgResponse = round($avgResponseRaw / 60, 2) . ' jam';
+        } else {
+            $days = floor($avgResponseRaw / 1440);
+            $hours = floor(($avgResponseRaw % 1440) / 60);
+            $avgResponse = $days . ' hari ' . $hours . ' jam';
+        }
 
         // ═══ SLA (%) — Berdasarkan target respon ≤ 30 menit (sesuai PRD) ═══
         $totalRespon = Ticket::whereNotNull('first_response_at')->count();
@@ -64,8 +74,16 @@ class DashboardController extends Controller
                 $it->sla_percentage = $totalTiket > 0
                     ? round(($slaOk / $totalTiket) * 100, 2)
                     : 0;
-                $it->avg_response = round($avg, 2) . ' menit';
-
+                if ($avg < 60) {
+                    $it->avg_response = round($avg, 2) . ' menit';
+                } elseif ($avg < 1440) {
+                    $it->avg_response = round($avg / 60, 2) . ' jam';
+                } else {
+                    $days = floor($avg / 1440);
+                    $hours = floor(($avg % 1440) / 60);
+                    $it->avg_response = $days . ' hari ' . $hours . ' jam';
+                }
+                
                 // Status berdasarkan SLA %
                 $it->status = $it->sla_percentage >= 90
                     ? 'Excellent'

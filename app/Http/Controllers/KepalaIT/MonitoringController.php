@@ -20,13 +20,22 @@ class MonitoringController extends Controller
         $month = $request->input('month', now()->month);
         $year = $request->input('year', now()->year);
 
-        // Rata-rata Respon Pertama (menit)
-        $avgRespon = Ticket::whereMonth('created_at', $month)
+        $avgResponRaw = Ticket::whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
             ->whereNotNull('first_response_at')
             ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_response_at)) as avg_minutes')
             ->value('avg_minutes') ?? 0;
 
+        // Format otomatis (Menit -> Jam -> Hari)
+        if ($avgResponRaw < 60) {
+            $avgRespon = round($avgResponRaw, 2) . ' menit';
+        } elseif ($avgResponRaw < 1440) { // < 24 jam
+            $avgRespon = round($avgResponRaw / 60, 2) . ' jam';
+        } else {
+            $days = floor($avgResponRaw / 1440);
+            $hours = floor(($avgResponRaw % 1440) / 60);
+            $avgRespon = $days . ' hari ' . $hours . ' jam';
+        }
         // Penyelesaian SLA (< 24 jam)
         $totalSelesai = Ticket::whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
