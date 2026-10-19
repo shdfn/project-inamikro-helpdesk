@@ -81,41 +81,56 @@
                     <th>Pelapor</th>
                     <th>Waktu</th>
                     <th>Status</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
-                @forelse($tickets as $ticket)
-                    <tr>
-                        <td class="fw-bold">#{{ $ticket->ticket_number }}</td>
-                        <td>{{ $ticket->title }}</td>
-                        <td>{{ $ticket->category->name ?? '-' }}</td>
-                        <td>
-                            @php
-                                $pc = match($ticket->priority) {
-                                    'Tinggi' => 'badge-soft-danger',
-                                    'Sedang' => 'badge-soft-warning',
-                                    default => 'badge-soft-success',
-                                };
-                            @endphp
-                            <span class="badge {{ $pc }} rounded-pill px-3">{{ $ticket->priority }}</span>
-                        </td>
-                        <td>{{ $ticket->mentor->name ?? '-' }}</td>
-                        <td>{{ $ticket->created_at->format('n/j/y H:i') }}</td>
-                        <td>
-                            <span class="badge {{ $ticket->status_badge_class }} rounded-pill px-3">
-                                <i class="bi bi-{{ $ticket->status_icon }}"></i> {{ $ticket->status }}
-                            </span>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7" class="text-center text-muted py-4">
-                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                            Belum ada riwayat tiket.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
+            @forelse($tickets as $ticket)
+                {{-- Baris bisa diklik ke halaman detail --}}
+                <tr onclick="window.location='{{ route('it.tickets.show', $ticket->id) }}'" 
+                    style="cursor: pointer;"
+                    onmouseover="this.style.backgroundColor='#f8f9fa';"
+                    onmouseout="this.style.backgroundColor='';">
+                    
+                    <td class="fw-bold">#{{ $ticket->ticket_number }}</td>
+                    <td>{{ $ticket->title }}</td>
+                    <td>{{ $ticket->category->name ?? '-' }}</td>
+                    <td>
+                        @php
+                            $pc = match($ticket->priority) {
+                                'Tinggi' => 'badge-soft-danger',
+                                'Sedang' => 'badge-soft-warning',
+                                default => 'badge-soft-success',
+                            };
+                        @endphp
+                        <span class="badge {{ $pc }} rounded-pill px-3">{{ $ticket->priority }}</span>
+                    </td>
+                    <td>{{ $ticket->mentor->name ?? '-' }}</td>
+                    <td>{{ $ticket->created_at->format('n/j/y H:i') }}</td>
+                    <td>
+                        <span class="badge {{ $ticket->status_badge_class }} rounded-pill px-3" title="{{ $ticket->status_label }}">
+                            <i class="bi bi-{{ $ticket->status_icon }}"></i> {{ $ticket->status_short }}
+                        </span>
+                    </td>
+                    
+                    {{-- Tambahkan Kolom Aksi --}}
+                    <td>
+                        <a href="{{ route('it.tickets.show', $ticket->id) }}" 
+                        class="btn btn-sm btn-outline-dark"
+                        onclick="event.stopPropagation();">
+                            <i class="bi bi-eye"></i> Detail
+                        </a>
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        Belum ada riwayat tiket.
+                    </td>
+                </tr>
+            @endforelse
+        </tbody>
         </table>
     </div>
 </div>
