@@ -3,7 +3,7 @@
     $notifCount = 0;
     $notifUrl = '#';
 
-    // === Notifikasi per role ===
+    // ⭐ SEMUA ROLE menghitung dari tabel notifications (SAMA dengan Sidebar & Controller)
     if ($role === 'mentor') {
         $notifCount = \App\Models\Notification::where('user_id', auth()->id())
             ->where('is_read', false)->count();
@@ -13,10 +13,9 @@
             ->where('is_read', false)->count();
         $notifUrl = route('it.notifications.index');
     } elseif ($role === 'kepala_it') {
-        // Notifikasi Kepala IT: jumlah tiket lambat (>2 jam)
-        $notifCount = \App\Models\Ticket::whereIn('status', ['Baru', 'Diproses'])
-            ->whereRaw('TIMESTAMPDIFF(MINUTE, created_at, NOW()) > 120')
-            ->count();
+        // FIX: Jangan hitung tiket lambat, hitung dari tabel notifications
+        $notifCount = \App\Models\Notification::where('user_id', auth()->id())
+            ->where('is_read', false)->count();
         $notifUrl = route('kepala.notifications.index');
     }
 
