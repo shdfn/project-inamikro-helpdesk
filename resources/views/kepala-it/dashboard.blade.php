@@ -49,7 +49,7 @@
         <div class="card card-custom p-3">
             <small class="text-muted fw-bold">AVG RESPONSE</small>
             <h2 class="fw-bold my-1">
-                {{ round($avgResponse, 2) }}<small class="fs-6 text-muted"> menit</small>
+                {{ $avgResponse }}
             </h2>
             <small class="text-success"><i class="bi bi-arrow-down"></i> lebih cepat dari target</small>
         </div>

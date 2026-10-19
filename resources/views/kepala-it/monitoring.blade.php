@@ -47,7 +47,7 @@
         <div class="card card-custom p-3 h-100">
             <small class="text-muted fw-bold" style="font-size: 0.7rem;">RATA-RATA RESPON PERTAMA</small>
             <h2 class="fw-bold my-2">
-                {{ round($avgRespon, 2) }} <small class="fs-6 text-muted">menit</small>
+                {{ $avgRespon }}
             </h2>
             <small class="text-success" style="font-size: 0.75rem;">
                 <i class="bi bi-check-circle"></i> Target &lt; 30 menit

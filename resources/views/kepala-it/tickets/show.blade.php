@@ -269,34 +269,57 @@
         <div class="card card-custom p-4 mb-4">
             <h5 class="fw-bold mb-3">Metrik</h5>
 
+            @php
+                // Helper: Format durasi ke Hari & Jam
+                function formatDurasi($start, $end) {
+                    if (!$start || !$end) return '-';
+                    
+                    $diffInHours = $start->diffInHours($end);
+                    $days = floor($diffInHours / 24);
+                    $hours = $diffInHours % 24;
+                    
+                    // Jika lebih dari 1 hari, tampilkan "X hari Y jam"
+                    if ($days > 0) {
+                        return $days . ' hari ' . $hours . ' jam';
+                    }
+                    // Jika kurang dari 1 hari, tampilkan "X jam"
+                    return round($diffInHours, 2) . ' jam';
+                }
+
+                // Helper: Format durasi respon (menit ke jam/hari)
+                function formatRespon($start, $end) {
+                    if (!$start || !$end) return '-';
+                    
+                    $diffInMinutes = $start->diffInMinutes($end);
+                    
+                    if ($diffInMinutes < 60) {
+                        return round($diffInMinutes, 2) . ' menit';
+                    } elseif ($diffInMinutes < 1440) { // < 24 jam
+                        return round($diffInMinutes / 60, 2) . ' jam';
+                    } else {
+                        $days = floor($diffInMinutes / 1440);
+                        $hours = floor(($diffInMinutes % 1440) / 60);
+                        return $days . ' hari ' . $hours . ' jam';
+                    }
+                }
+            @endphp
+
             {{-- Umur Tiket --}}
             <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
                 <span class="text-muted">Umur Tiket</span>
-                <strong>{{ round($ticket->created_at->diffInHours(now()), 2) }} jam</strong>
+                <strong>{{ formatDurasi($ticket->created_at, now()) }}</strong>
             </div>
 
             {{-- Waktu Respon Pertama --}}
             <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
                 <span class="text-muted">Waktu Respon Pertama</span>
-                <strong>
-                    @if($ticket->first_response_at)
-                        {{ round($ticket->created_at->diffInMinutes($ticket->first_response_at), 2) }} menit
-                    @else
-                        <span class="text-muted">-</span>
-                    @endif
-                </strong>
+                <strong>{{ formatRespon($ticket->created_at, $ticket->first_response_at) }}</strong>
             </div>
 
             {{-- Waktu Penyelesaian --}}
             <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
                 <span class="text-muted">Waktu Penyelesaian</span>
-                <strong>
-                    @if($ticket->resolved_at)
-                        {{ round($ticket->created_at->diffInHours($ticket->resolved_at), 2) }} jam
-                    @else
-                        <span class="text-muted">-</span>
-                    @endif
-                </strong>
+                <strong>{{ formatDurasi($ticket->created_at, $ticket->resolved_at) }}</strong>
             </div>
 
             {{-- SLA STATUS (SESUAI PRD) --}}
