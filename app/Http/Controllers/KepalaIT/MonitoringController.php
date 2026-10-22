@@ -73,12 +73,9 @@ class MonitoringController extends Controller
             ->limit(5)
             ->get();
 
-        // Kepuasan Pengguna (dummy)
-        $kepuasan = 4.5;
-
         return view('kepala-it.monitoring', compact(
             'avgRespon', 'persenSLA', 'totalSelesai', 'dalamSLA',
-            'onDuty', 'kategoriTeratas', 'kepuasan', 'month', 'year'
+            'onDuty', 'kategoriTeratas', 'month', 'year'
         ));
     }
 

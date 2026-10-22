@@ -40,10 +40,11 @@
 </div>
 
 {{-- ═══════════════════════════════════════════ --}}
-{{-- 4 KARTU METRIK --}}
+{{-- 3 KARTU METRIK                              --}}
 {{-- ═══════════════════════════════════════════ --}}
 <div class="row g-3 mb-4">
-    <div class="col-md-3">
+    {{-- 1. Rata-rata Respon --}}
+    <div class="col-md-4">
         <div class="card card-custom p-3 h-100">
             <small class="text-muted fw-bold" style="font-size: 0.7rem;">RATA-RATA RESPON PERTAMA</small>
             <h2 class="fw-bold my-2">
@@ -54,7 +55,9 @@
             </small>
         </div>
     </div>
-    <div class="col-md-3">
+
+    {{-- 2. Penyelesaian SLA --}}
+    <div class="col-md-4">
         <div class="card card-custom p-3 h-100">
             <small class="text-muted fw-bold" style="font-size: 0.7rem;">PENYELESAIAN SLA</small>
             <h2 class="fw-bold my-2 text-success">{{ $persenSLA }}%</h2>
@@ -63,24 +66,13 @@
             </small>
         </div>
     </div>
-    <div class="col-md-3">
+
+    {{-- 3. Teknisi On-Duty --}}
+    <div class="col-md-4">
         <div class="card card-custom p-3 h-100">
             <small class="text-muted fw-bold" style="font-size: 0.7rem;">TEKNISI ON-DUTY</small>
             <h2 class="fw-bold my-2">{{ $onDuty->count() }}</h2>
             <small class="text-muted" style="font-size: 0.75rem;">IT Support aktif</small>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card card-custom p-3 h-100">
-            <small class="text-muted fw-bold" style="font-size: 0.7rem;">KEPUASAN PENGGUNA</small>
-            <h2 class="fw-bold my-2">{{ $kepuasan }} <small class="fs-6 text-muted">/ 5.0</small></h2>
-            <div class="text-warning">
-                <i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-half"></i>
-            </div>
         </div>
     </div>
 </div>
