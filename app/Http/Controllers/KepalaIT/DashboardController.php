@@ -114,7 +114,7 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // ═══ Distribusi Status (untuk Chart di View) ═══
+        // ═══ Distribusi Status (untuk Chart di View) ═
         $statusDistribusi = [
             'Baru' => Ticket::where('status', 'Baru')->count(),
             'Ditangani IT' => Ticket::where('status', 'Ditangani IT')->count(),
