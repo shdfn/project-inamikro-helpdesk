@@ -11,12 +11,13 @@ class NotificationController extends Controller
     {
         $userId = auth()->id();
 
+        // Ambil notifikasi
         $notifications = Notification::where('user_id', $userId)
             ->with(['ticket', 'sender'])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Mark as read
+        // Tandai sudah dibaca
         Notification::where('user_id', $userId)
             ->where('is_read', false)
             ->update(['is_read' => true]);

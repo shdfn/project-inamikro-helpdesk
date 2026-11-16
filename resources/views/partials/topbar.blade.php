@@ -97,17 +97,35 @@
             @endif
 
             {{-- User Profile --}}
-            <div class="d-flex align-items-center gap-2 border-start ps-3">
-                <div class="text-white rounded-circle d-flex align-items-center justify-content-center"
-                     style="width: 35px; height: 35px; background-color: var(--inamikro-red);">
-                    <i class="bi bi-person"></i>
-                </div>
-                <div class="lh-1">
-                    <div class="fw-bold small">{{ auth()->user()->name }}</div>
-                    <div class="text-muted" style="font-size: 0.75rem;">
-                        {{ $role === 'kepala_it' ? 'Kepala IT' : ucfirst(str_replace('_', ' ', $role)) }}
+            <div class="dropdown border-start ps-3">
+                <a href="#" class="d-flex align-items-center gap-2 text-decoration-none text-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="text-white rounded-circle d-flex align-items-center justify-content-center"
+                        style="width: 35px; height: 35px; background-color: var(--inamikro-red);">
+                        <i class="bi bi-person"></i>
                     </div>
-                </div>
+                    <div class="lh-1">
+                        <div class="fw-bold small">{{ auth()->user()->name }}</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">
+                            {{ ucfirst(str_replace('_', ' ', $role)) }}
+                        </div>
+                    </div>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li>
+                        <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                            <i class="bi bi-pencil-square me-2"></i> Edit Profil
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="dropdown-item text-danger">
+                                <i class="bi bi-box-arrow-right me-2"></i> Logout
+                            </button>
+                        </form>
+                    </li>
+                </ul>
             </div>
         </div>
     </div>

@@ -2,9 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 
-// Auth
+// Auth & Profile
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\ProfileController;
 
 // Mentor Controllers
 use App\Http\Controllers\Mentor\DashboardController as MentorDashboard;
@@ -39,6 +40,12 @@ Route::post('forgot-password', [PasswordResetController::class, 'sendResetLink']
 Route::get('reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
 Route::post('reset-password', [PasswordResetController::class, 'resetPassword'])->name('password.update');
 
+// ================= PROFIL (SEMUA ROLE) =================
+Route::middleware('auth')->group(function () {
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+});
+
 // ================= MENTOR =================
 Route::middleware('auth')->prefix('mentor')->name('mentor.')->group(function () {
     Route::get('dashboard', [MentorDashboard::class, 'index'])->name('dashboard');
@@ -50,11 +57,6 @@ Route::middleware('auth')->prefix('mentor')->name('mentor.')->group(function () 
     Route::get('tickets/{id}', [MentorTicket::class, 'show'])->name('tickets.show');
     Route::post('tickets/{id}/message', [MentorTicket::class, 'sendMessage'])->name('tickets.message');
     Route::post('tickets/{id}/confirm', [MentorTicket::class, 'confirmResolution'])->name('tickets.confirm');
-
-    Route::get('hubungi-it', function () {
-    $itSupports = \App\Models\User::where('role', 'it_support')->get();
-    return view('mentor.hubungi-it', compact('itSupports'));
-    })->name('hubungi-it');
 });
 
 // ================= IT SUPPORT =================
@@ -62,7 +64,6 @@ Route::middleware('auth')->prefix('it-support')->name('it.')->group(function () 
     Route::get('dashboard', [ITDashboard::class, 'index'])->name('dashboard');
     Route::get('notifications', [ITNotification::class, 'index'])->name('notifications.index');
 
-    // URUTAN PENTING: spesifik dulu, baru {id}
     Route::get('tickets/incoming', [ITTicket::class, 'incoming'])->name('tickets.incoming');
     Route::get('tickets/my', [ITTicket::class, 'myTickets'])->name('tickets.my');
     Route::get('tickets/history', [ITTicket::class, 'history'])->name('tickets.history');
@@ -76,25 +77,16 @@ Route::middleware('auth')->prefix('it-support')->name('it.')->group(function () 
 
 // ================= KEPALA IT =================
 Route::middleware('auth')->prefix('kepala-it')->name('kepala.')->group(function () {
-
-    // Dashboard
     Route::get('dashboard', [KepalaDashboard::class, 'index'])->name('dashboard');
-
-    // Notifikasi
     Route::get('notifications', [KepalaNotification::class, 'index'])->name('notifications.index');
 
-    // Monitoring Eksekutif (dengan alias agar kompatibel)
     Route::get('monitoring', [KepalaMonitoring::class, 'index'])->name('monitoring');
     Route::get('monitoring/sla', [KepalaMonitoring::class, 'index'])->name('monitoring.sla');
     Route::get('monitoring/statistik', [KepalaMonitoring::class, 'statistik'])->name('monitoring.statistik');
 
-    // Statistik & Analitik
     Route::get('statistik', [KepalaStatistik::class, 'index'])->name('statistik');
-
-    // Eskalasi & Pantauan
     Route::get('eskalasi', [KepalaEskalasi::class, 'index'])->name('eskalasi');
 
-    // Tiket — URUTAN PENTING
     Route::get('tickets', [KepalaTicket::class, 'index'])->name('tickets.index');
     Route::get('tickets/export', [KepalaTicket::class, 'export'])->name('tickets.export');
     Route::get('tickets/late', [KepalaTicket::class, 'late'])->name('tickets.late');
@@ -107,4 +99,8 @@ Route::middleware('auth')->prefix('kepala-it')->name('kepala.')->group(function 
     Route::get('users/{id}/edit', [KepalaUser::class, 'edit'])->name('users.edit');
     Route::put('users/{id}', [KepalaUser::class, 'update'])->name('users.update');
     Route::delete('users/{id}', [KepalaUser::class, 'destroy'])->name('users.destroy');
+
+    // ⭐ Route untuk Persetujuan Perubahan Profil
+    Route::post('users/profile/approve/{id}', [KepalaUser::class, 'approveProfile'])->name('users.approve');
+    Route::post('users/profile/reject/{id}', [KepalaUser::class, 'rejectProfile'])->name('users.reject');
 });

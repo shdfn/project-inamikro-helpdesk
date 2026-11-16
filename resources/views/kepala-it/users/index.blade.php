@@ -4,10 +4,78 @@
 
 @section('konten')
 
-@if(session('error'))
-    <div class="alert alert-danger">{{ session('error') }}</div>
+{{-- ═══════════════════════════════════════════ --}}
+{{-- TABEL PENGAJUAN PERUBAHAN PROFIL --}}
+{{-- ═══════════════════════════════════════════ --}}
+@if(isset($profileRequests) && $profileRequests->count() > 0)
+<div class="card card-custom p-4 mb-4 border-start border-4 border-warning">
+    <div class="d-flex align-items-center mb-3">
+        <i class="bi bi-exclamation-circle-fill text-warning fs-4 me-2"></i>
+        <h5 class="fw-bold mb-0">Pengajuan Perubahan Profil</h5>
+        <span class="badge bg-warning text-dark ms-2">{{ $profileRequests->count() }} Menunggu</span>
+    </div>
+    <p class="text-muted small mb-3">Pengguna berikut mengajukan perubahan data profil. Silakan tinjau dan setujui.</p>
+    
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle bg-white">
+            <thead class="bg-light">
+                <tr>
+                    <th style="width: 20%;">Pengguna</th>
+                    <th style="width: 30%;">Data Lama</th>
+                    <th style="width: 30%;">Data Baru (Pengajuan)</th>
+                    <th style="width: 20%;" class="text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($profileRequests as $req)
+                    <tr>
+                        <td>
+                            <div class="fw-bold">{{ $req->user->name ?? 'User Terhapus' }}</div>
+                            <small class="text-muted">{{ ucfirst(str_replace('_', ' ', $req->user->role ?? '-')) }}</small>
+                        </td>
+                        <td class="text-muted small">
+                            <div>Nama: {{ $req->user->name ?? '-' }}</div>
+                            <div>Username: {{ $req->user->username ?? '-' }}</div>
+                            <div>Email: {{ $req->user->email ?? '-' }}</div>
+                        </td>
+                        <td class="small fw-bold text-success">
+                            <div>Nama: {{ $req->new_name }}</div>
+                            <div>Username: {{ $req->new_username }}</div>
+                            <div>Email: {{ $req->new_email }}</div>
+                            
+                            @if($req->new_password)
+                                <div class="text-danger mt-1">
+                                    <i class="bi bi-lock-fill"></i> Password Juga Diubah
+                                </div>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            <form action="{{ route('kepala.users.approve', $req->id) }}" method="POST" class="d-inline"
+                                  onsubmit="return confirm('Setujui perubahan data ini?');">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-success mb-1 w-100">
+                                    <i class="bi bi-check-circle"></i> Setujui
+                                </button>
+                            </form>
+                            <form action="{{ route('kepala.users.reject', $req->id) }}" method="POST" class="d-inline"
+                                  onsubmit="return confirm('Tolak pengajuan ini?');">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-danger w-100">
+                                    <i class="bi bi-x-circle"></i> Tolak
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
 @endif
 
+{{-- ═══════════════════════════════════════════ --}}
+{{-- TABEL MANAJEMEN USER UTAMA --}}
+{{-- ═══════════════════════════════════════════ --}}
 <div class="card card-custom p-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
@@ -45,7 +113,7 @@
         </div>
     </form>
 
-    {{-- Tabel --}}
+    {{-- Tabel User --}}
     <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead class="bg-light">
@@ -72,6 +140,7 @@
                                     'mentor' => 'badge-soft-primary',
                                     'it_support' => 'badge-soft-warning',
                                     'kepala_it' => 'badge-soft-danger',
+                                    default => 'badge-soft-secondary',
                                 };
                             @endphp
                             <span class="badge {{ $roleClass }} rounded-pill px-3">
@@ -81,7 +150,7 @@
                         <td>{{ $user->created_at->format('d M Y') }}</td>
                         <td>
                             <a href="{{ route('kepala.users.edit', $user->id) }}"
-                               class="btn btn-sm btn-outline-primary">
+                               class="btn btn-sm btn-outline-primary" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
                             @if($user->id !== auth()->id())
@@ -90,7 +159,7 @@
                                       onsubmit="return confirm('Hapus user ini?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>

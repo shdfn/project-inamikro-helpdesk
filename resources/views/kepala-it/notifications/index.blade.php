@@ -14,7 +14,8 @@
     </div>
 
     @forelse($notifications as $notif)
-        <a href="{{ $notif->ticket_id ? route('kepala.tickets.show', $notif->ticket_id) : '#' }}"
+        {{-- ⭐ Cek jika ada ticket_id, arahkan ke tiket. Jika tidak ada, arahkan ke Manajemen User --}}
+        <a href="{{ $notif->ticket_id ? route('kepala.tickets.show', $notif->ticket_id) : route('kepala.users.index') }}"
            class="d-flex align-items-start p-3 border-bottom text-decoration-none text-dark
                   {{ $notif->is_read ? '' : 'bg-light' }}">
             <div class="me-3 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
