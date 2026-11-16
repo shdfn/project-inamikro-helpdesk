@@ -71,15 +71,14 @@
     </div>
 
     {{-- 5. Avg Resolution --}}
-    <div class="col-6 col-md-4 col-lg">
+    <div class="col">
         <div class="card card-custom p-3 h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <small class="text-muted fw-bold" style="font-size: 0.7rem;">AVG PENYELESAIAN</small>
                 <i class="bi bi-clock-history text-danger"></i>
             </div>
-            <h2 class="fw-bold my-2">
-                {{ round($avgResolution, 2) }}
-                <small class="fs-6 text-muted">jam</small>
+            <h2 class="fw-bold my-2" style="font-size: 1.3rem;">
+                {{ $avgResolution }}
             </h2>
             <small class="text-muted" style="font-size: 0.75rem;">Rata-rata selesai</small>
         </div>

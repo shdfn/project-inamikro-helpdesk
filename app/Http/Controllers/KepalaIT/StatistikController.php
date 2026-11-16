@@ -30,9 +30,21 @@ class StatistikController extends Controller
         }
 
         // Rata-rata waktu penyelesaian
-        $avgResolution = Ticket::whereNotNull('resolved_at')
-            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, created_at, resolved_at)) as avg_hours')
-            ->value('avg_hours') ?? 0;
+    $avgResolutionMinutes = Ticket::whereNotNull('resolved_at')
+        ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, resolved_at)) as avg_minutes')
+        ->value('avg_minutes') ?? 0;
+
+    // Konversi menit menjadi Hari, Jam, Menit
+        $hari = floor($avgResolutionMinutes / 1440);
+        $jam = floor(($avgResolutionMinutes % 1440) / 60);
+        $menit = round($avgResolutionMinutes % 60);
+
+        $parts = [];
+        if ($hari > 0) $parts[] = $hari . ' Hari';
+        if ($jam > 0) $parts[] = $jam . ' Jam';
+        if ($menit > 0 || empty($parts)) $parts[] = $menit . ' Menit';
+
+        $avgResolution = implode(' ', $parts);
 
         // Kategori teratas
         $kategoriTop = DB::table('tickets')
