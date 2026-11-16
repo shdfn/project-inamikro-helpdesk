@@ -61,8 +61,8 @@
 </div>
 
 <div class="row">
-    <!-- TIKET TERBARU -->
-    <div class="col-md-8">
+    <!-- KOLOM KIRI: TIKET TERBARU -->
+    <div class="col-md-8 mb-4">
         <div class="card card-custom p-4 h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2"></i> Tiket Terbaru</h5>
@@ -76,23 +76,19 @@
                     <tbody>
                         @forelse ($recentTickets as $ticket)
                             <tr onclick="window.location='{{ route('mentor.tickets.show', $ticket->id) }}'" style="cursor: pointer;">
-                                <!-- Kolom ID & Judul -->
                                 <td style="width: 70%;">
                                     <div class="fw-bold text-dark">#{{ $ticket->ticket_number }}</div>
                                     <div class="fw-bold">{{ $ticket->title }}</div>
                                     <small class="text-muted">{{ $ticket->category->name ?? '-' }}</small>
                                 </td>
                                 
-                                <!-- Kolom Status & Waktu (Ditumpuk) -->
                                 <td class="text-end" style="width: 30%;">
-                                    <!-- Badge Status di atas -->
                                     <div class="mb-1">
                                         <span class="badge {{ $ticket->status_badge_class }} rounded-pill px-3">
                                             <i class="bi bi-{{ $ticket->status_icon }}"></i>
                                             {{ $ticket->status_short }}
                                         </span>
                                     </div>
-                                    <!-- Waktu di bawah badge -->
                                     <div class="text-muted small" style="font-size: 0.75rem;">
                                         {{ $ticket->created_at->diffForHumans() }}
                                     </div>
@@ -100,9 +96,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="2" class="text-center text-muted py-4">
-                                    Belum ada tiket.
-                                </td>
+                                <td colspan="2" class="text-center text-muted py-4">Belum ada tiket.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -111,15 +105,39 @@
         </div>
     </div>
     
-    <!-- BUTUH BANTUAN -->
-    <div class="col-md-4">
-        <div class="card card-custom p-4 text-center h-100 d-flex flex-column justify-content-center">
-            <i class="bi bi-file-earmark-plus text-secondary" style="font-size: 4rem;"></i>
-            <h5 class="fw-bold mt-3">Butuh Bantuan?</h5>
-            <p class="text-muted small">Jika ada kendala yang belum bisa ditangani, silakan hubungi Kepala IT</p>
-            <a href="{{ route('mentor.hubungi-it') }}" class="btn btn-inamikro w-100 mt-2">
-                <i class="bi bi-headset"></i> Hubungi IT Support
-            </a>
+    <!-- KOLOM KANAN: TIM IT SUPPORT -->
+    <div class="col-md-4 mb-4">
+        <div class="card card-custom p-4 h-100">
+            <h5 class="fw-bold mb-3 text-center">
+                <i class="bi bi-people-fill text-danger"></i> Tim IT Support
+            </h5>
+            <p class="text-muted small text-center mb-4">Hubungi teknisi jika darurat (di luar sistem tiket)</p>
+            
+            <div class="d-flex flex-column gap-2">
+                @forelse($itSupports as $it)
+                    <div class="d-flex align-items-center border rounded p-2">
+                        <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+                            style="width: 36px; height: 36px; font-size: 0.75rem; font-weight: 600;">
+                            {{ strtoupper(substr($it->name, 0, 2)) }}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold" style="font-size: 0.85rem;">{{ $it->name }}</div>
+                            <small class="text-muted" style="font-size: 0.7rem;">IT Support</small>
+                        </div>
+                        <div class="text-success" title="Online" style="font-size: 0.6rem;">
+                            <i class="bi bi-circle-fill"></i>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center text-muted small py-3">
+                        Belum ada data IT Support.
+                    </div>
+                @endforelse
+            </div>
+            
+            <div class="alert alert-warning mt-3 mb-0 text-start" style="font-size: 0.75rem;">
+                <i class="bi bi-info-circle"></i> <strong>Catatan:</strong> Tetap laporkan kendala Anda melalui menu <strong>"Lapor Kendala"</strong> agar tiket dapat dilacak dan diukur SLA-nya.
+            </div>
         </div>
     </div>
 </div>

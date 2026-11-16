@@ -24,6 +24,10 @@ class DashboardController extends Controller
             ->limit(4)
             ->get();
 
-        return view('mentor.dashboard', compact('stats', 'recentTickets'));
+        // ⭐ Tambahkan baris ini untuk mengambil data IT Support
+        $itSupports = \App\Models\User::where('role', 'it_support')->get();
+
+        // ⭐ Pastikan 'itSupports' masuk ke dalam compact
+        return view('mentor.dashboard', compact('stats', 'recentTickets', 'itSupports'));
     }
 }
