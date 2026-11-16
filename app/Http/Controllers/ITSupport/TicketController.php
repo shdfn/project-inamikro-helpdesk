@@ -15,7 +15,7 @@ class TicketController extends Controller
     // ============ TIKET MASUK ============
     public function incoming(Request $request)
     {
-        $query = Ticket::with(['mentor', 'itSupport', 'category'])
+        $query = Ticket::with(['mentor', 'itSupport', 'category', 'messages.user'])
             ->whereIn('status', ['Baru', 'Ditangani IT', 'Dibalas IT', 'Dibalas Mentor']);
 
         // Search

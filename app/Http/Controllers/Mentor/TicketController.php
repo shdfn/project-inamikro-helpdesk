@@ -15,7 +15,7 @@ class TicketController extends Controller
     // ============ INDEX ============
     public function index(Request $request)
     {
-        $query = Ticket::where('mentor_id', auth()->id())->with('category');
+        $query = Ticket::where('mentor_id', auth()->id())->with(['category', 'messages.user']);
 
         // Search
         if ($request->filled('q')) {

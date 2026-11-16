@@ -12,7 +12,7 @@ class TicketController extends Controller
     // ================= SEMUA TIKET =================
     public function index(Request $request)
     {
-        $query = Ticket::with(['mentor', 'itSupport', 'category']);
+        $query = Ticket::with(['mentor', 'itSupport', 'category', 'messages.user']);
 
         // Search
         if ($request->filled('q')) {
@@ -66,13 +66,25 @@ class TicketController extends Controller
 
         $jumlahTiket = $tickets->count();
 
-        // Rata-rata keterlambatan (menit)
-        $avgKeterlambatan = 0;
+        // Rata-rata keterlambatan (Format Hari, Jam, Menit)
+        $avgKeterlambatan = '0 menit';
         if ($jumlahTiket > 0) {
             $totalMenit = $tickets->sum(function ($t) {
                 return $t->created_at->diffInMinutes(now()) - 120;
             });
-            $avgKeterlambatan = round($totalMenit / $jumlahTiket);
+            $rataRataMenit = round($totalMenit / $jumlahTiket);
+            
+            // Konversi menit ke Hari, Jam, Menit
+            $hari = floor($rataRataMenit / 1440);
+            $jam = floor(($rataRataMenit % 1440) / 60);
+            $menit = $rataRataMenit % 60;
+
+            $parts = [];
+            if ($hari > 0) $parts[] = $hari . ' Hari';
+            if ($jam > 0) $parts[] = $jam . ' Jam';
+            if ($menit > 0 || empty($parts)) $parts[] = $menit . ' Menit';
+
+            $avgKeterlambatan = implode(' ', $parts);
         }
 
         // SLA bulan ini

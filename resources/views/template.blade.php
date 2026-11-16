@@ -264,6 +264,28 @@
             .sidebar { display: none; }
             .main-wrapper { margin-left: 0; width: 100%; }
         }
+
+                /* ═══════════════════════════════════════════ */
+        /* CUSTOM PAGINATION — Tema INAmikro (Merah)   */
+        /* ═══════════════════════════════════════════ */
+        .pagination .page-item.active .page-link {
+            background-color: var(--inamikro-red) !important;
+            border-color: var(--inamikro-red) !important;
+            color: white !important;
+        }
+        
+        .pagination .page-link {
+            color: var(--inamikro-red) !important;
+        }
+
+        .pagination .page-link:focus {
+            box-shadow: 0 0 0 0.25rem rgba(216, 27, 33, 0.25) !important;
+        }
+
+        .pagination .page-item .page-link {
+            border-radius: 6px;
+            margin: 0 2px;
+        }
     </style>
 </head>
 <body>

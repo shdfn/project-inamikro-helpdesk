@@ -10,25 +10,19 @@
             <h4 class="fw-bold mb-0">Pengawasan Tiket</h4>
             <p class="text-muted mb-0">Semua tiket dari seluruh divisi</p>
         </div>
-        <a href="{{ route('kepala.tickets.export', request()->query()) }}"
-           class="btn btn-outline-danger">
+        <a href="{{ route('kepala.tickets.export', request()->query()) }}" class="btn btn-outline-danger">
             <i class="bi bi-download"></i> Export CSV
         </a>
     </div>
 
     {{-- FILTER BAR --}}
     <form method="GET" action="{{ route('kepala.tickets.index') }}" class="row g-2 mb-3">
-        {{-- Search --}}
         <div class="col-md-3">
             <div class="input-group">
                 <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
-                <input type="text" name="q" value="{{ request('q') }}"
-                       class="form-control bg-light border-0"
-                       placeholder="Cari tiket, judul, kategori...">
+                <input type="text" name="q" value="{{ request('q') }}" class="form-control bg-light border-0" placeholder="Cari tiket...">
             </div>
         </div>
-
-        {{-- Filter Status --}}
         <div class="col-md-2">
             <select name="status" class="form-select">
                 <option value="">Semua Status</option>
@@ -40,20 +34,14 @@
                 <option value="Ditutup" {{ request('status') == 'Ditutup' ? 'selected' : '' }}>Ditutup</option>
             </select>
         </div>
-
-        {{-- Filter Kategori --}}
         <div class="col-md-2">
             <select name="category_id" class="form-select">
                 <option value="">Semua Kategori</option>
                 @foreach($categories as $cat)
-                    <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>
-                        {{ $cat->name }}
-                    </option>
+                    <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                 @endforeach
             </select>
         </div>
-
-        {{-- Filter Prioritas --}}
         <div class="col-md-2">
             <select name="priority" class="form-select">
                 <option value="">Semua Prioritas</option>
@@ -62,63 +50,50 @@
                 <option value="Rendah" {{ request('priority') == 'Rendah' ? 'selected' : '' }}>Rendah</option>
             </select>
         </div>
-
-        {{-- Tombol Filter --}}
         <div class="col-md-1">
-            <button type="submit" class="btn btn-inamikro w-100" title="Filter">
-                <i class="bi bi-funnel"></i>
-            </button>
+            <button type="submit" class="btn btn-inamikro w-100" title="Filter"><i class="bi bi-funnel"></i></button>
         </div>
-
-        {{-- Tombol Reset --}}
         <div class="col-md-2">
-            <a href="{{ route('kepala.tickets.index') }}"
-               class="btn btn-outline-secondary w-100">
-                <i class="bi bi-arrow-clockwise"></i> Reset
-            </a>
+            <a href="{{ route('kepala.tickets.index') }}" class="btn btn-outline-secondary w-100" title="Reset"><i class="bi bi-arrow-clockwise"></i> Reset</a>
         </div>
     </form>
 
     {{-- INFO JUMLAH --}}
     <div class="d-flex justify-content-between align-items-center mb-2">
-        <small class="text-muted">
-            Total: <strong>{{ $tickets->total() }}</strong> tiket
-            @if(request('q') || request('status') || request('category_id') || request('priority'))
-                (terfilter)
-            @endif
-        </small>
-        @if(request()->has('q') || request()->has('status') || request()->has('category_id') || request()->has('priority'))
-            <a href="{{ route('kepala.tickets.index') }}"
-               class="text-decoration-none small text-danger">
-                <i class="bi bi-x-circle"></i> Reset Filter
-            </a>
-        @endif
+        <small class="text-muted">Total: <strong>{{ $tickets->total() }}</strong> tiket</small>
     </div>
 
     {{-- TABEL --}}
     <div class="table-responsive">
-        <table class="table table-hover align-middle">
+        <table class="table table-hover align-middle" style="table-layout: fixed; width: 100%;">
             <thead class="bg-light">
                 <tr>
-                    <th>ID Tiket</th>
-                    <th>Judul Kendala</th>
-                    <th>Kategori</th>
-                    <th>Prioritas</th>
-                    <th>Pelapor</th>
-                    <th>IT Support</th>
-                    <th>Status</th>
-                    <th>Waktu</th>
-                    <th>Aksi</th>
+                    <th style="width: 8%;">ID Tiket</th>
+                    <th style="width: 22%;">Judul Kendala</th>
+                    <th style="width: 10%;">Kategori</th>
+                    <th style="width: 8%;">Prioritas</th>
+                    <th style="width: 10%;">Pelapor</th>
+                    <th style="width: 10%;">IT Support</th>
+                    <th style="width: 12%;">Status</th>
+                    <th style="width: 12%;">Waktu Dibuat</th>
+                    <th style="width: 12%;">Balasan Terakhir</th>
+                    <th style="width: 11%;">Waktu Balasan</th>
+                    <th style="width: 5%;">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($tickets as $ticket)
-                    <tr>
+                    <tr onclick="window.location='{{ route('kepala.tickets.show', $ticket->id) }}'" style="cursor: pointer;">
                         <td class="fw-bold">#{{ $ticket->ticket_number }}</td>
-                        <td>{{ $ticket->title }}</td>
-                        <td>{{ $ticket->category->name ?? '-' }}</td>
-
-                        {{-- KOLOM PRIORITAS --}}
+                        
+                        <td style="word-wrap: break-word;">
+                            <div class="fw-bold">{{ $ticket->title }}</div>
+                            <small class="text-muted">{{ \Illuminate\Support\Str::limit($ticket->description, 30) }}</small>
+                        </td>
+                        
+                        {{-- Gunakan ?-> agar aman jika kategori kosong --}}
+                        <td>{{ $ticket->category?->name ?? '-' }}</td>
+                        
                         <td>
                             @php
                                 $pc = match($ticket->priority) {
@@ -127,52 +102,72 @@
                                     default => 'badge-soft-success',
                                 };
                             @endphp
-                            <span class="badge {{ $pc }} rounded-pill px-3">
-                                {{ $ticket->priority }}
-                            </span>
+                            <span class="badge {{ $pc }} rounded-pill px-2">{{ $ticket->priority }}</span>
                         </td>
 
-                        <td>
-                            <i class="bi bi-person-circle me-1"></i>
-                            {{ $ticket->mentor->name ?? '-' }}
-                        </td>
+                        {{-- Gunakan ?-> agar aman jika mentor kosong --}}
+                        <td><i class="bi bi-person-circle me-1"></i> {{ $ticket->mentor?->name ?? '-' }}</td>
 
+                        {{-- Gunakan ?-> agar aman jika itSupport kosong --}}
                         <td>
                             @if($ticket->itSupport)
-                                <i class="bi bi-person-badge me-1"></i>
-                                {{ $ticket->itSupport->name }}
+                                <i class="bi bi-person-badge me-1"></i> {{ $ticket->itSupport->name }}
                             @else
                                 <span class="text-muted small">Belum ditugaskan</span>
                             @endif
                         </td>
 
-                        {{-- KOLOM STATUS --}}
+                        {{-- STATUS TIDAK DIUBAH --}}
                         <td>
-                            <span class="badge {{ $ticket->status_badge_class }} rounded-pill px-3"
-                                  title="{{ $ticket->status_label }}">
-                                <i class="bi bi-{{ $ticket->status_icon }}"></i>
-                                {{ $ticket->status_label }}
+                            <span class="badge {{ $ticket->status_badge_class }} rounded-pill px-2" title="{{ $ticket->status_short }}">
+                                <i class="bi bi-{{ $ticket->status_icon }}"></i> {{ $ticket->status_short }}
                             </span>
                         </td>
 
-                        <td>{{ $ticket->created_at->format('n/j/y H:i') }}</td>
+                        <td>
+                            <small class="text-muted">{{ $ticket->created_at->format('d M Y, H:i:s') }}</small>
+                        </td>
+
+                        {{-- Balasan Terakhir --}}
+                        <td>
+                            @php
+                                $lastMessage = $ticket->messages->first(); 
+                            @endphp
+                            
+                            @if($lastMessage && $lastMessage->user)
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold" style="font-size: 0.8rem;">
+                                        <i class="bi bi-person-circle"></i> {{ Str::limit($lastMessage->user->name, 12) }}
+                                    </span>
+                                    <span class="badge {{ $lastMessage->user->role === 'mentor' ? 'bg-secondary' : 'bg-danger' }}" style="font-size: 0.6rem; width: fit-content;">
+                                        {{ $lastMessage->user->role === 'mentor' ? 'Mentor' : 'IT Support' }}
+                                    </span>
+                                </div>
+                            @else
+                                <span class="text-muted fst-italic">-</span>
+                            @endif
+                        </td>
+
+                        {{-- Waktu Balasan --}}
+                        <td>
+                            @if($lastMessage)
+                                <small class="text-muted">{{ $lastMessage->created_at->format('d/m/y H:i') }}</small>
+                            @else
+                                <span class="text-muted fst-italic">-</span>
+                            @endif
+                        </td>
 
                         <td>
-                            <a href="{{ route('kepala.tickets.show', $ticket->id) }}"
-                               class="btn btn-sm btn-outline-dark">
-                                <i class="bi bi-eye"></i> Detail
+                            <a href="{{ route('kepala.tickets.show', $ticket->id) }}" class="btn btn-sm btn-outline-dark" onclick="event.stopPropagation();">
+                                <i class="bi bi-eye"></i>
                             </a>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" class="text-center text-muted py-4">
+                        <td colspan="11" class="text-center text-muted py-4">
                             <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                            @if(request('q') || request('status') || request('category_id') || request('priority'))
-                                Tidak ada tiket yang cocok dengan filter.
-                            @else
-                                Belum ada tiket.
-                            @endif
+                            Tidak ada tiket.
                         </td>
                     </tr>
                 @endforelse
@@ -182,8 +177,8 @@
 
     {{-- PAGINATION --}}
     @if($tickets->hasPages())
-        <div class="mt-3">
-            {{ $tickets->withQueryString()->links() }}
+        <div class="mt-4 d-flex justify-content-end">
+            {{ $tickets->withQueryString()->links('pagination::bootstrap-5') }}
         </div>
     @endif
 </div>

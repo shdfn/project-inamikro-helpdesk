@@ -84,30 +84,35 @@
         <table class="table table-hover align-middle">
             <thead class="bg-light">
                 <tr>
-                    <th>ID Tiket</th>
+                     <th>ID Tiket</th>
                     <th>Judul Kendala</th>
                     <th>Kategori</th>
                     <th>Prioritas</th>
                     <th>Status</th>
-                    <th>Waktu</th>
+                    <th>Waktu Dibuat</th>
+                    <th>Balasan Terakhir</th>
+                    <th>Waktu Balasan</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($tickets as $ticket)
-                    {{-- ⭐ Baris bisa diklik ke detail tiket --}}
                     <tr onclick="window.location='{{ route('mentor.tickets.show', $ticket->id) }}'"
                         style="cursor: pointer;"
                         onmouseover="this.style.backgroundColor='#f8f9fa';"
                         onmouseout="this.style.backgroundColor='';">
+                        
                         <td class="fw-bold">#{{ $ticket->ticket_number }}</td>
+                        
                         <td>
                             <div class="fw-bold">{{ $ticket->title }}</div>
                             <small class="text-muted">
-                                {{ \Illuminate\Support\Str::limit($ticket->description, 60) }}
+                                {{ \Illuminate\Support\Str::limit($ticket->description, 50) }}
                             </small>
                         </td>
+                        
                         <td>{{ $ticket->category->name ?? '-' }}</td>
+                        
                         <td>
                             @php
                                 $pc = match($ticket->priority) {
@@ -116,34 +121,62 @@
                                     default => 'badge-soft-success',
                                 };
                             @endphp
-                            <span class="badge {{ $pc }} rounded-pill px-3">
-                                {{ $ticket->priority }}
+                            <span class="badge {{ $pc }} rounded-pill px-3">{{ $ticket->priority }}</span>
+                        </td>
+                        
+                        <td>
+                            <span class="badge {{ $ticket->status_badge_class }} rounded-pill px-3" title="{{ $ticket->status_label }}">
+                                <i class="bi bi-{{ $ticket->status_icon }}"></i> {{ $ticket->status_short }}
                             </span>
                         </td>
+                        
+                        {{-- KOLOM WAKTU DIBUAT --}}
                         <td>
-                            <span class="badge {{ $ticket->status_badge_class }} rounded-pill px-3"
-                                  title="{{ $ticket->status_label }}">
-                                <i class="bi bi-{{ $ticket->status_icon }}"></i>
-                                {{ $ticket->status_short }}
-                            </span>
-                        </td>
-                        <td>
-                            <small class="text-muted" title="{{ $ticket->created_at->format('d M Y H:i') }}">
-                                {{ $ticket->created_at->diffForHumans() }}
+                            <small class="text-muted">
+                                {{ $ticket->created_at->format('d M Y, H:i:s') }}
                             </small>
                         </td>
+
+                        {{-- KOLOM SIAPA YANG MEMBALAS --}}
                         <td>
-                            {{-- ⭐ onclick stopPropagation() supaya klik tombol tidak dobel trigger baris --}}
+                            @if($ticket->messages->isNotEmpty())
+                                @php $lastMessage = $ticket->messages->first(); @endphp
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold" style="font-size: 0.85rem;">
+                                        <i class="bi bi-person-circle"></i> {{ $lastMessage->user->name ?? '-' }}
+                                    </span>
+                                    <span class="badge {{ $lastMessage->user->role === 'mentor' ? 'bg-secondary' : 'bg-danger' }}" 
+                                        style="font-size: 0.65rem; width: fit-content;">
+                                        {{ $lastMessage->user->role === 'mentor' ? 'Mentor' : 'IT Support' }}
+                                    </span>
+                                </div>
+                            @else
+                                <span class="text-muted fst-italic">-</span>
+                            @endif
+                        </td>
+
+                        {{-- KOLOM WAKTU BALASAN TERAKHIR --}}
+                        <td>
+                            @if($ticket->messages->isNotEmpty())
+                                <small class="text-muted">
+                                    {{ $ticket->messages->first()->created_at->format('d M Y, H:i:s') }}
+                                </small>
+                            @else
+                                <span class="text-muted fst-italic">-</span>
+                            @endif
+                        </td>
+
+                        <td>
                             <a href="{{ route('mentor.tickets.show', $ticket->id) }}"
-                               class="btn btn-outline-danger btn-sm"
-                               onclick="event.stopPropagation();">
+                            class="btn btn-outline-danger btn-sm"
+                            onclick="event.stopPropagation();">
                                 <i class="bi bi-eye"></i> Detail
                             </a>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">
+                        <td colspan="9" class="text-center text-muted py-4">
                             <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                             @if(request('q') || request('status'))
                                 Tidak ada tiket yang cocok dengan filter.
