@@ -96,6 +96,11 @@
                 </a>
             @endif
 
+         {{-- Tombol Toggle Light/Dark Mode --}}
+        <button class="btn btn-link text-secondary p-0 me-2" id="themeToggle" title="Ubah Tema">
+            <i class="bi bi-moon-fill fs-5" id="themeIcon"></i>
+        </button>
+
             {{-- User Profile --}}
             <div class="dropdown border-start ps-3">
                 <a href="#" class="d-flex align-items-center gap-2 text-decoration-none text-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">

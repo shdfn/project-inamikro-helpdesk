@@ -14,7 +14,7 @@
         :root {
             --inamikro-red: #d81b21;
             --inamikro-bg: #f4f6f9;
-            --sidebar-width: 230px; /* Sesuaikan dengan lebar sidebar Anda */
+            --sidebar-width: 230px;
         }
 
         /* ═══════════════════════════════════════════ */
@@ -31,13 +31,13 @@
             line-height: 1.45;
             color: #333;
             margin: 0;
-            /* Kunci body agar tidak ada scroll global */
             height: 100vh;
             overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         /* ═══════════════════════════════════════════ */
-        /* SIDEBAR — Fixed di kiri                     */
+        /* SIDEBAR                                     */
         /* ═══════════════════════════════════════════ */
         .sidebar {
             position: fixed;
@@ -48,14 +48,15 @@
             background-color: white;
             border-right: 1px solid #e0e0e0;
             z-index: 1000;
-            overflow-y: auto; /* Sidebar bisa scroll jika menu panjang */
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
             padding: 1rem;
+            transition: background-color 0.3s, border-color 0.3s;
         }
 
         /* ═══════════════════════════════════════════ */
-        /* MAIN WRAPPER — Geser ke kanan sidebar       */
+        /* MAIN WRAPPER                                */
         /* ═══════════════════════════════════════════ */
         .main-wrapper {
             margin-left: var(--sidebar-width);
@@ -66,7 +67,7 @@
         }
 
         /* ═══════════════════════════════════════════ */
-        /* TOPBAR — Sticky di atas konten              */
+        /* TOPBAR                                      */
         /* ═══════════════════════════════════════════ */
         .topbar-wrapper {
             position: sticky;
@@ -74,19 +75,20 @@
             z-index: 999;
             background-color: white;
             border-bottom: 1px solid #e0e0e0;
+            transition: background-color 0.3s, border-color 0.3s;
         }
 
         /* ═══════════════════════════════════════════ */
-        /* CONTENT AREA — Hanya ini yang scroll        */
+        /* CONTENT AREA                                */
         /* ═══════════════════════════════════════════ */
         .content-area {
             flex-grow: 1;
-            overflow-y: auto; /* Scroll hanya di area konten */
+            overflow-y: auto;
             padding: 1rem;
         }
 
         /* ═══════════════════════════════════════════ */
-        /* HEADING — Proporsional                      */
+        /* HEADING                                     */
         /* ═══════════════════════════════════════════ */
         h1 { font-size: 1.6rem; }
         h2 { font-size: 1.35rem; }
@@ -102,6 +104,7 @@
             border: none;
             border-radius: 10px;
             box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+            transition: background-color 0.3s, color 0.3s;
         }
         .card-custom.p-4 { padding: 1.1rem !important; }
         .card-custom.p-3 { padding: 0.9rem !important; }
@@ -157,6 +160,7 @@
         .table {
             font-size: 0.85rem;
             margin-bottom: 0;
+            color: #333;
         }
         .table th {
             padding: 9px 12px;
@@ -191,7 +195,7 @@
         .mt-3 { margin-top: 0.75rem !important; }
 
         /* ═══════════════════════════════════════════ */
-        /* ALERT (Notifikasi) — RAPI                   */
+        /* ALERT (Notifikasi)                          */
         /* ═══════════════════════════════════════════ */
         .alert {
             font-size: 0.85rem;
@@ -211,7 +215,7 @@
         }
 
         /* ═══════════════════════════════════════════ */
-        /* SCROLLBAR CUSTOM (BIAR RAPI)                */
+        /* SCROLLBAR CUSTOM                            */
         /* ═══════════════════════════════════════════ */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-thumb { background-color: #c1c1c1; border-radius: 4px; }
@@ -265,7 +269,7 @@
             .main-wrapper { margin-left: 0; width: 100%; }
         }
 
-                /* ═══════════════════════════════════════════ */
+        /* ═══════════════════════════════════════════ */
         /* CUSTOM PAGINATION — Tema INAmikro (Merah)   */
         /* ═══════════════════════════════════════════ */
         .pagination .page-item.active .page-link {
@@ -273,18 +277,68 @@
             border-color: var(--inamikro-red) !important;
             color: white !important;
         }
-        
         .pagination .page-link {
             color: var(--inamikro-red) !important;
         }
-
         .pagination .page-link:focus {
             box-shadow: 0 0 0 0.25rem rgba(216, 27, 33, 0.25) !important;
         }
-
         .pagination .page-item .page-link {
             border-radius: 6px;
             margin: 0 2px;
+        }
+
+        /* ═══════════════════════════════════════════ */
+        /* DARK MODE OVERRIDES                         */
+        /* ═══════════════════════════════════════════ */
+        [data-bs-theme="dark"] body {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        
+        [data-bs-theme="dark"] .card-custom,
+        [data-bs-theme="dark"] .sidebar,
+        [data-bs-theme="dark"] .bg-white,
+        [data-bs-theme="dark"] .topbar-wrapper {
+            background-color: #1e1e1e !important;
+            color: #e0e0e0;
+            border-color: #333 !important;
+        }
+
+        [data-bs-theme="dark"] .sidebar .nav-link {
+            color: #e0e0e0;
+        }
+
+        [data-bs-theme="dark"] .sidebar .nav-link:hover:not(.active) {
+            background-color: #2c2c2c;
+        }
+
+        [data-bs-theme="dark"] .text-dark,
+        [data-bs-theme="dark"] .table {
+            color: #e0e0e0 !important;
+        }
+
+        [data-bs-theme="dark"] .table-hover tbody tr:hover {
+            background-color: #2c2c2c;
+        }
+
+        [data-bs-theme="dark"] .bg-light {
+            background-color: #2c2c2c !important;
+        }
+
+        [data-bs-theme="dark"] .form-control,
+        [data-bs-theme="dark"] .form-select,
+        [data-bs-theme="dark"] .input-group-text {
+            background-color: #2c2c2c;
+            border-color: #444;
+            color: #e0e0e0;
+        }
+
+        [data-bs-theme="dark"] .border-bottom,
+        [data-bs-theme="dark"] .border-top,
+        [data-bs-theme="dark"] .border-start,
+        [data-bs-theme="dark"] .border-end {
+            border-color: #444 !important;
         }
     </style>
 </head>
@@ -352,6 +406,45 @@
                 bsAlert.close();
             });
         }, 5000);
+    });
+
+    // === LOGIKA LIGHT/DARK MODE ===
+    document.addEventListener('DOMContentLoaded', function () {
+        const htmlElement = document.documentElement;
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+
+        if (themeToggle) {
+            // 1. Cek tema yang tersimpan di localStorage
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            htmlElement.setAttribute('data-bs-theme', currentTheme);
+            updateIcon(currentTheme);
+
+            // 2. Fungsi klik tombol toggle
+            themeToggle.addEventListener('click', function () {
+                const newTheme = htmlElement.getAttribute('data-bs-theme') === 'light' ? 'dark' : 'light';
+                
+                // Ganti atribut di <html>
+                htmlElement.setAttribute('data-bs-theme', newTheme);
+                
+                // Simpan ke localStorage
+                localStorage.setItem('theme', newTheme);
+                
+                // Ganti ikon
+                updateIcon(newTheme);
+            });
+
+            // 3. Fungsi untuk mengganti ikon (Matahari/Bulan)
+            function updateIcon(theme) {
+                if (theme === 'dark') {
+                    themeIcon.classList.remove('bi-moon-fill');
+                    themeIcon.classList.add('bi-sun-fill');
+                } else {
+                    themeIcon.classList.remove('bi-sun-fill');
+                    themeIcon.classList.add('bi-moon-fill');
+                }
+            }
+        }
     });
 </script>
 
