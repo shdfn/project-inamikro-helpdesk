@@ -340,6 +340,35 @@
         [data-bs-theme="dark"] .border-end {
             border-color: #444 !important;
         }
+
+        /* ═══════════════════════════════════════════ */
+        /* WARNA & UKURAN LOGO INAMIKRO DINAMIS        */
+        /* ═══════════════════════════════════════════ */
+        .brand-text {
+            font-size: 1.90rem; /* Ukuran proporsional dengan logo 35px */
+            font-family: 'Segoe UI', sans-serif;
+            letter-spacing: -0.5px;
+        }
+
+        /* Default (Light Mode): INA berwarna Hitam */
+        .text-ina {
+            color: #000000;
+            transition: color 0.3s ease;
+        }
+
+        /* Dark Mode: INA berwarna Putih */
+        [data-bs-theme="dark"] .text-ina {
+            color: #ffffff !important;
+        }
+
+        /* Profil User Background */
+        .sidebar-profile-box {
+            background-color: #f8f9fa;
+            transition: background-color 0.3s;
+        }
+        [data-bs-theme="dark"] .sidebar-profile-box {
+            background-color: #2c2c2c !important;
+        }
     </style>
 </head>
 <body>

@@ -24,9 +24,13 @@
         ->count();
 @endphp
 
-<div class="col-md-3 col-lg-2 sidebar p-3 d-flex flex-column">
+<div class="sidebar p-3 d-flex flex-column">
+    {{-- Logo & Teks INAmikro --}}
     <div class="d-flex align-items-center mb-4 ps-2">
-        <img src="{{ asset('images/logo-inamikro.png') }}" alt="INAmikro" style="height: 35px;">
+        <img src="{{ asset('images/logo-icon.png') }}" alt="Icon" style="height: 35px;" class="me-2">
+        <h3 class="fw-bold m-0 brand-text" style="font-family: 'Segoe UI', sans-serif; letter-spacing: -0.5px;">
+            <span class="text-ina">INA</span><span style="color: var(--inamikro-red);">mikro</span>
+        </h3>
     </div>
 
     <nav class="nav flex-column mb-auto">
@@ -165,7 +169,7 @@
     </nav>
 
     {{-- Profil User --}}
-    <div class="mt-auto p-3 bg-light rounded-3 d-flex align-items-center">
+    <div class="mt-auto p-3 rounded-3 d-flex align-items-center sidebar-profile-box">
         <div class="text-white rounded-circle p-2 me-2 d-flex align-items-center justify-content-center"
              style="width: 40px; height: 40px; background-color: var(--inamikro-red);">
             <i class="bi bi-person"></i>
