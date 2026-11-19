@@ -9,7 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('profile_requests', function (Blueprint $table) {
-            $table->string('new_password')->nullable()->after('new_email');
+            // Tambahkan kolom new_password tanpa ->after()
+            $table->string('new_password')->nullable();
         });
     }
 
