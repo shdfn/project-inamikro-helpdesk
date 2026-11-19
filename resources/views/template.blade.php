@@ -369,6 +369,34 @@
         [data-bs-theme="dark"] .sidebar-profile-box {
             background-color: #2c2c2c !important;
         }
+
+        /* ═══════════════════════════════════════════ */
+        /* CUSTOM CHAT BUBBLE DI DARK MODE             */
+        /* ═══════════════════════════════════════════ */
+        /* Warna default (Light Mode) */
+        .chat-bubble-right {
+            background-color: #f4c7c9;
+            color: #000;
+        }
+        .chat-bubble-left {
+            background-color: #f8f9fa;
+            color: #000;
+        }
+
+        /* Warna saat Dark Mode */
+        [data-bs-theme="dark"] .chat-bubble-right {
+            background-color: #8b1e23; /* Merah gelap */
+            color: #ffffff;
+        }
+        [data-bs-theme="dark"] .chat-bubble-left {
+            background-color: #2c2c2c; /* Abu gelap */
+            color: #ffffff;
+        }
+        /* Memperbaiki warna link di dalam chat saat dark mode */
+        [data-bs-theme="dark"] .chat-bubble-right a,
+        [data-bs-theme="dark"] .chat-bubble-left a {
+            color: #90caf9 !important;
+        }
     </style>
 </head>
 <body>

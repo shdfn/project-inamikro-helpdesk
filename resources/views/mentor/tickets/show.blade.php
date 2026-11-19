@@ -66,11 +66,10 @@
             </table>
         </div>
 
-        {{-- DISKUSI (DENGAN AREA SCROLL) --}}
+        {{-- DISKUSI --}}
         <div class="card card-custom p-4">
             <h5 class="fw-bold mb-3"><i class="bi bi-chat-left-text"></i> Diskusi</h5>
 
-            {{-- ⭐ AREA CHAT (SCROLLABLE) — Max Height 450px --}}
             <div class="chat-area" style="max-height: 450px; overflow-y: auto; padding-right: 8px;">
 
                 {{-- DESKRIPSI KENDALA AWAL --}}
@@ -115,25 +114,32 @@
                     </div>
                 @endif
 
-                {{-- PESAN DISKUSI (TERBARU DI ATAS) --}}
+                {{-- PESAN DISKUSI --}}
                 @forelse($ticket->messages as $msg)
                     @if($msg->user_id === auth()->id())
-                        {{-- Pesan dari diri sendiri (kanan) --}}
+                        {{-- Pesan dari diri sendiri (Mentor) --}}
                         <div class="d-flex mb-3 justify-content-end">
-                            <div class="p-3 rounded-3" style="max-width: 80%; background-color: #f4c7c9;">
+                            <div class="p-3 rounded-3 chat-bubble-right" style="max-width: 80%;">
                                 <small class="d-block text-end mb-1 fw-bold">
                                     (Anda) {{ $msg->user->name }}
                                 </small>
-                                <small class="d-block text-end mb-2 text-muted" style="font-size: 0.7rem;">
+                                <small class="d-block text-end mb-2 opacity-75" style="font-size: 0.7rem;">
                                     {{ $msg->created_at->format('d M Y H:i') }}
                                 </small>
-                                {{ $msg->message }}
+                                <div class="text-end">{{ $msg->message }}</div>
                                 @if($msg->attachment)
                                     <div class="mt-2 pt-2 border-top">
-                                        <a href="{{ asset('storage/' . $msg->attachment) }}" download
-                                           class="text-dark small text-decoration-none">
-                                            <i class="bi bi-paperclip"></i> {{ basename($msg->attachment) }}
-                                        </a>
+                                        @if(Str::endsWith($msg->attachment, ['.jpg', '.jpeg', '.png', '.gif', '.webp']))
+                                            <div class="text-end mt-1">
+                                                <a href="{{ asset('storage/' . $msg->attachment) }}" target="_blank">
+                                                    <img src="{{ asset('storage/' . $msg->attachment) }}" alt="Lampiran" class="img-fluid rounded" style="max-height: 200px; object-fit: cover;">
+                                                </a>
+                                            </div>
+                                        @else
+                                            <a href="{{ asset('storage/' . $msg->attachment) }}" download class="text-white small text-decoration-none">
+                                                <i class="bi bi-paperclip"></i> {{ basename($msg->attachment) }}
+                                            </a>
+                                        @endif
                                     </div>
                                 @endif
                             </div>
@@ -145,7 +151,7 @@
                             </div>
                         </div>
                     @else
-                        {{-- Pesan dari IT Support (kiri) --}}
+                        {{-- Pesan dari IT Support --}}
                         <div class="d-flex mb-3">
                             <div class="me-2">
                                 <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center"
@@ -153,20 +159,23 @@
                                     <i class="bi bi-person-fill"></i>
                                 </div>
                             </div>
-                            <div class="p-3 rounded-3 bg-light" style="max-width: 80%;">
+                            <div class="p-3 rounded-3 chat-bubble-left" style="max-width: 80%;">
                                 <small class="d-block mb-1 fw-bold">
                                     {{ $msg->user->name ?? 'User' }} (IT Support)
                                 </small>
-                                <small class="d-block mb-2 text-muted" style="font-size: 0.7rem;">
+                                <small class="d-block mb-2 opacity-75" style="font-size: 0.7rem;">
                                     {{ $msg->created_at->format('d M Y H:i') }}
                                 </small>
                                 {{ $msg->message }}
                                 @if($msg->attachment)
                                     <div class="mt-2 pt-2 border-top">
-                                        <a href="{{ asset('storage/' . $msg->attachment) }}" download
-                                           class="text-dark small text-decoration-none">
-                                            <i class="bi bi-paperclip"></i> {{ basename($msg->attachment) }}
-                                        </a>
+                                        @if(Str::endsWith($msg->attachment, ['.jpg', '.jpeg', '.png', '.gif', '.webp']))
+                                            <img src="{{ asset('storage/' . $msg->attachment) }}" alt="Lampiran" class="img-fluid rounded mt-1" style="max-height: 200px; cursor: pointer;" onclick="window.open(this.src)">
+                                        @else
+                                            <a href="{{ asset('storage/' . $msg->attachment) }}" download class="text-dark small text-decoration-none">
+                                                <i class="bi bi-paperclip"></i> {{ basename($msg->attachment) }}
+                                            </a>
+                                        @endif
                                     </div>
                                 @endif
                             </div>
@@ -178,9 +187,9 @@
                         <p class="mb-0 mt-2 small">Belum ada balasan dari IT Support.</p>
                     </div>
                 @endforelse
-            </div> {{-- END AREA CHAT --}}
+            </div>
 
-            {{-- FORM KIRIM PESAN (STICKY BOTTOM) --}}
+            {{-- FORM KIRIM PESAN --}}
             @if($ticket->status !== 'Ditutup')
                 <div class="mt-3 pt-3 border-top">
                     <form action="{{ route('mentor.tickets.message', $ticket->id) }}" method="POST"
@@ -222,8 +231,7 @@
             <h5 class="fw-bold mb-4">Timeline SLA</h5>
             
             <div class="timeline-container ps-3">
-                
-                {{-- 1. Tiket Masuk (Selalu Merah) --}}
+                {{-- 1. Tiket Masuk --}}
                 <div class="timeline-item is-active position-relative pb-4">
                     <div class="timeline-dot is-active position-absolute"></div>
                     <div class="fw-bold text-danger ms-3">Tiket Masuk</div>
@@ -236,9 +244,7 @@
                 @php $isRespon = $ticket->first_response_at ? true : false; @endphp
                 <div class="timeline-item {{ $isRespon ? 'is-active' : '' }} position-relative pb-4">
                     <div class="timeline-dot {{ $isRespon ? 'is-active' : '' }} position-absolute"></div>
-                    <div class="{{ $isRespon ? 'fw-bold text-danger' : 'text-muted' }} ms-3">
-                        Respon Pertama
-                    </div>
+                    <div class="{{ $isRespon ? 'fw-bold text-danger' : 'text-muted' }} ms-3">Respon Pertama</div>
                     <div class="text-muted ms-3" style="font-size: 0.8rem;">
                         {{ $isRespon ? $ticket->first_response_at->format('d M Y, H:i') : 'Belum ada respon' }}
                     </div>
@@ -248,9 +254,7 @@
                 @php $isSelesai = in_array($ticket->status, ['Selesai', 'Ditutup']) ? true : false; @endphp
                 <div class="timeline-item {{ $isSelesai ? 'is-active' : '' }} position-relative pb-4">
                     <div class="timeline-dot {{ $isSelesai ? 'is-active' : '' }} position-absolute"></div>
-                    <div class="{{ $isSelesai ? 'fw-bold text-danger' : 'text-muted' }} ms-3">
-                        Penanganan Selesai
-                    </div>
+                    <div class="{{ $isSelesai ? 'fw-bold text-danger' : 'text-muted' }} ms-3">Penanganan Selesai</div>
                     <div class="text-muted ms-3" style="font-size: 0.8rem;">
                         {{ $ticket->resolved_at ? $ticket->resolved_at->format('d M Y, H:i') : 'Belum selesai' }}
                     </div>
@@ -260,14 +264,11 @@
                 @php $isTutup = $ticket->status === 'Ditutup' ? true : false; @endphp
                 <div class="timeline-item {{ $isTutup ? 'is-active' : '' }} position-relative">
                     <div class="timeline-dot {{ $isTutup ? 'is-active' : '' }} position-absolute"></div>
-                    <div class="{{ $isTutup ? 'fw-bold text-danger' : 'text-muted' }} ms-3">
-                        Ditutup
-                    </div>
+                    <div class="{{ $isTutup ? 'fw-bold text-danger' : 'text-muted' }} ms-3">Ditutup</div>
                     <div class="text-muted ms-3" style="font-size: 0.8rem;">
                         {{ $isTutup ? 'Dikonfirmasi Mentor' : 'Belum ditutup' }}
                     </div>
                 </div>
-
             </div>
         </div>
         
@@ -278,8 +279,7 @@
                     <i class="bi bi-patch-question text-success fs-1"></i>
                     <h5 class="fw-bold mt-2">Konfirmasi Penyelesaian</h5>
                     <p class="text-muted small mb-3">
-                        IT Support sudah menandai tiket ini <strong>selesai</strong>.
-                        Apakah kendala Anda sudah teratasi?
+                        IT Support sudah menandai tiket ini <strong>selesai</strong>. Apakah kendala Anda sudah teratasi?
                     </p>
 
                     <form action="{{ route('mentor.tickets.confirm', $ticket->id) }}" method="POST"
@@ -349,11 +349,9 @@
         document.getElementById('fileName').textContent = e.target.files[0]?.name ?? '';
     });
 
-    // Auto-scroll ke bawah saat chat dibuka (opsional)
     document.addEventListener('DOMContentLoaded', function () {
         const chatArea = document.querySelector('.chat-area');
         if (chatArea) {
-            // Karena pesan terbaru di atas, scroll ke paling atas
             chatArea.scrollTop = 0;
         }
     });

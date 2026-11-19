@@ -120,20 +120,31 @@
                     @if($msg->user_id === auth()->id())
                         {{-- Pesan dari diri sendiri (IT Support) — kanan --}}
                         <div class="d-flex mb-3 justify-content-end">
-                            <div class="p-3 rounded-3" style="max-width: 80%; background-color: #f4c7c9;">
+                            <div class="p-3 rounded-3 chat-bubble-right" style="max-width: 80%;">
                                 <small class="d-block text-end mb-1 fw-bold">
                                     <i class="bi bi-person-badge"></i> (Anda) {{ $msg->user->name }}
                                 </small>
-                                <small class="d-block text-end mb-2 text-muted" style="font-size: 0.7rem;">
+                                <small class="d-block text-end mb-2 opacity-75" style="font-size: 0.7rem;">
                                     {{ $msg->created_at->format('d M Y H:i') }}
                                 </small>
-                                {{ $msg->message }}
+                                
+                                {{-- Teks Pesan Rata Kanan --}}
+                                <div class="text-end">{{ $msg->message }}</div>
+                                
                                 @if($msg->attachment)
                                     <div class="mt-2 pt-2 border-top">
-                                        <a href="{{ asset('storage/' . $msg->attachment) }}" download
-                                           class="text-dark small text-decoration-none">
-                                            <i class="bi bi-paperclip"></i> {{ basename($msg->attachment) }}
-                                        </a>
+                                        @if(Str::endsWith($msg->attachment, ['.jpg', '.jpeg', '.png', '.gif', '.webp']))
+                                            {{-- Bungkus dengan text-end agar gambar di kanan --}}
+                                            <div class="text-end mt-1">
+                                                <a href="{{ asset('storage/' . $msg->attachment) }}" target="_blank">
+                                                    <img src="{{ asset('storage/' . $msg->attachment) }}" alt="Lampiran" class="img-fluid rounded" style="max-height: 200px; object-fit: cover;">
+                                                </a>
+                                            </div>
+                                        @else
+                                            <a href="{{ asset('storage/' . $msg->attachment) }}" download class="text-white small text-decoration-none">
+                                                <i class="bi bi-paperclip"></i> {{ basename($msg->attachment) }}
+                                            </a>
+                                        @endif
                                     </div>
                                 @endif
                             </div>
@@ -153,20 +164,31 @@
                                     <i class="bi bi-person-fill"></i>
                                 </div>
                             </div>
-                            <div class="p-3 rounded-3 bg-light" style="max-width: 80%;">
+                            <div class="p-3 rounded-3 chat-bubble-left" style="max-width: 80%;">
                                 <small class="d-block mb-1 fw-bold">
                                     <i class="bi bi-person"></i> {{ $msg->user->name ?? 'User' }} (Mentor)
                                 </small>
-                                <small class="d-block mb-2 text-muted" style="font-size: 0.7rem;">
+                                <small class="d-block mb-2 opacity-75" style="font-size: 0.7rem;">
                                     {{ $msg->created_at->format('d M Y H:i') }}
                                 </small>
                                 {{ $msg->message }}
+                                
                                 @if($msg->attachment)
+                                    @php
+                                        $ext = pathinfo($msg->attachment, PATHINFO_EXTENSION);
+                                        $isImage = in_array(strtolower($ext), ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                                    @endphp
+                                    
                                     <div class="mt-2 pt-2 border-top">
-                                        <a href="{{ asset('storage/' . $msg->attachment) }}" download
-                                           class="text-dark small text-decoration-none">
-                                            <i class="bi bi-paperclip"></i> {{ basename($msg->attachment) }}
-                                        </a>
+                                        @if($isImage)
+                                            {{-- Tampilkan Gambar --}}
+                                            <img src="{{ asset('storage/' . $msg->attachment) }}" alt="Lampiran" class="img-fluid rounded" style="max-height: 200px; cursor: pointer;" onclick="window.open(this.src)">
+                                        @else
+                                            {{-- Tampilkan Link untuk Dokumen --}}
+                                            <a href="{{ asset('storage/' . $msg->attachment) }}" download class="text-dark small text-decoration-none">
+                                                <i class="bi bi-paperclip"></i> {{ basename($msg->attachment) }}
+                                            </a>
+                                        @endif
                                     </div>
                                 @endif
                             </div>
