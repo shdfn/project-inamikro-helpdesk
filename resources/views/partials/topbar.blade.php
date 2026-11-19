@@ -26,7 +26,7 @@
         default     => '#',
     };
 
-    // ⭐ BREADCRUMB DINAMIS (Menyesuaikan Menu Sidebar) ⭐
+    // ⭐ BREADCRUMB DINAMIS ⭐
     $breadcrumbTitle = '';
     if ($role === 'mentor') {
         $breadcrumbTitle = match(true) {
@@ -34,6 +34,7 @@
             request()->routeIs('mentor.tickets.create') => 'Lapor Kendala Baru',
             request()->routeIs('mentor.tickets.index', 'mentor.tickets.show') => 'Tiket Saya',
             request()->routeIs('mentor.notifications.*') => 'Notifikasi',
+            request()->routeIs('profile.*') => 'Edit Profil',
             default => 'Helpdesk'
         };
     } elseif ($role === 'it_support') {
@@ -42,7 +43,9 @@
             request()->routeIs('it.tickets.incoming') => 'Tiket Masuk',
             request()->routeIs('it.tickets.my') => 'Tiket Ditangani Saya',
             request()->routeIs('it.tickets.history') => 'Riwayat & Arsip',
+            request()->routeIs('it.password-reset.*') => 'Reset Password',
             request()->routeIs('it.notifications.*') => 'Notifikasi',
+            request()->routeIs('profile.*') => 'Edit Profil',
             default => 'Helpdesk'
         };
     } elseif ($role === 'kepala_it') {
@@ -55,6 +58,7 @@
             request()->routeIs('kepala.eskalasi') => 'Eskalasi',
             request()->routeIs('kepala.notifications.*') => 'Notifikasi',
             request()->routeIs('kepala.users.*') => 'Manajemen User',
+            request()->routeIs('profile.*') => 'Edit Profil',
             default => 'Helpdesk'
         };
     }
@@ -70,7 +74,7 @@
             </small>
         </div>
 
-        {{-- TENGAH: Search Bar (semua role) --}}
+        {{-- TENGAH: Search Bar --}}
         <form action="{{ $searchAction }}" method="GET" class="flex-grow-1" style="max-width: 500px;">
             <div class="input-group">
                 <span class="input-group-text bg-light border-0">
@@ -96,12 +100,12 @@
                 </a>
             @endif
 
-         {{-- Tombol Toggle Light/Dark Mode --}}
-        <button class="btn btn-link text-secondary p-0 me-2" id="themeToggle" title="Ubah Tema">
-            <i class="bi bi-moon-fill fs-5" id="themeIcon"></i>
-        </button>
+            {{-- Tombol Toggle Light/Dark Mode --}}
+            <button class="btn btn-link text-secondary p-0 me-2" id="themeToggle" title="Ubah Tema">
+                <i class="bi bi-moon-fill fs-5" id="themeIcon"></i>
+            </button>
 
-            {{-- User Profile --}}
+            {{-- User Profile Dropdown --}}
             <div class="dropdown border-start ps-3">
                 <a href="#" class="d-flex align-items-center gap-2 text-decoration-none text-dark dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                     <div class="text-white rounded-circle d-flex align-items-center justify-content-center"

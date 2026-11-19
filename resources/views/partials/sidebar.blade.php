@@ -12,13 +12,13 @@
         $badgeDitangani = \App\Models\Ticket::where('it_support_id', $user->id)
             ->whereIn('status', ['Ditangani IT', 'Dibalas IT', 'Dibalas Mentor'])
             ->count();
+        $badgeReset = \App\Models\PasswordResetRequest::where('is_processed', false)->count();
     } elseif ($role === 'kepala_it') {
         $lateCount = \App\Models\Ticket::whereIn('status', ['Baru', 'Ditangani IT', 'Dibalas IT', 'Dibalas Mentor'])
             ->whereRaw('TIMESTAMPDIFF(MINUTE, created_at, NOW()) > 120')
             ->count();
     }
 
-    // ⭐ Hitung notifikasi — SAMA dengan topbar
     $notifCount = \App\Models\Notification::where('user_id', $user->id)
         ->where('is_read', false)
         ->count();
@@ -92,6 +92,18 @@
                href="{{ route('it.tickets.history') }}">
                 <i class="bi bi-clock-history me-2"></i> Riwayat & Arsip
             </a>
+            
+            {{-- Reset Password IT Support --}}
+            <a class="nav-link {{ request()->routeIs('it.password-reset.*') ? 'active' : '' }}"
+               href="{{ route('it.password-reset.index') }}">
+                <i class="bi bi-key me-2"></i> Reset Password
+                @if(isset($badgeReset) && $badgeReset > 0)
+                    <span class="badge {{ request()->routeIs('it.password-reset.*') ? 'bg-white text-danger' : 'bg-danger text-white' }} float-end rounded-pill">
+                        {{ $badgeReset }}
+                    </span>
+                @endif
+            </a>
+
             <a class="nav-link {{ request()->routeIs('it.notifications.*') ? 'active' : '' }}"
                href="{{ route('it.notifications.index') }}">
                 <i class="bi bi-bell me-2"></i> Notifikasi

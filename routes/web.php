@@ -16,6 +16,7 @@ use App\Http\Controllers\Mentor\NotificationController as MentorNotification;
 use App\Http\Controllers\ITSupport\DashboardController as ITDashboard;
 use App\Http\Controllers\ITSupport\TicketController as ITTicket;
 use App\Http\Controllers\ITSupport\NotificationController as ITNotification;
+use App\Http\Controllers\ITSupport\PasswordResetController as ITPasswordReset;
 
 // Kepala IT Controllers
 use App\Http\Controllers\KepalaIT\DashboardController as KepalaDashboard;
@@ -34,16 +35,15 @@ Route::get('login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('login', [AuthController::class, 'login']);
 Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
-// ================= LUPA SANDI =================
+// ================= LUPA SANDI (Mentor Request) =================
 Route::get('forgot-password', [PasswordResetController::class, 'showForgotForm'])->name('password.request');
 Route::post('forgot-password', [PasswordResetController::class, 'sendResetLink'])->name('password.email');
-Route::get('reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
-Route::post('reset-password', [PasswordResetController::class, 'resetPassword'])->name('password.update');
 
 // ================= PROFIL (SEMUA ROLE) =================
 Route::middleware('auth')->group(function () {
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+    // ⚠️ PERBAIKAN: Ubah POST menjadi PUT agar sesuai dengan @method('PUT') di view
+    Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 });
 
 // ================= MENTOR =================
@@ -57,6 +57,9 @@ Route::middleware('auth')->prefix('mentor')->name('mentor.')->group(function () 
     Route::get('tickets/{id}', [MentorTicket::class, 'show'])->name('tickets.show');
     Route::post('tickets/{id}/message', [MentorTicket::class, 'sendMessage'])->name('tickets.message');
     Route::post('tickets/{id}/confirm', [MentorTicket::class, 'confirmResolution'])->name('tickets.confirm');
+    
+    // ⭐ ROUTE BARU: Mentor Tutup Tiket Langsung
+    Route::post('tickets/{id}/close', [MentorTicket::class, 'closeTicket'])->name('tickets.close');
 });
 
 // ================= IT SUPPORT =================
@@ -72,6 +75,10 @@ Route::middleware('auth')->prefix('it-support')->name('it.')->group(function () 
     Route::get('tickets/{id}', [ITTicket::class, 'show'])->name('tickets.show');
     Route::post('tickets/{id}/message', [ITTicket::class, 'sendMessage'])->name('tickets.message');
     Route::post('tickets/{id}/resolve', [ITTicket::class, 'markResolved'])->name('tickets.resolve');
+
+    // ⭐ ROUTE BARU: IT Support Reset Password
+    Route::get('password-reset', [ITPasswordReset::class, 'index'])->name('password-reset.index');
+    Route::post('password-reset/{id}/process', [ITPasswordReset::class, 'process'])->name('password-reset.process');
 });
 
 // ================= KEPALA IT =================
@@ -106,4 +113,5 @@ Route::middleware('auth')->prefix('kepala-it')->name('kepala.')->group(function 
     // Kepala IT bisa merespon chat & menandai selesai
     Route::post('tickets/{id}/message', [ITTicket::class, 'sendMessage'])->name('tickets.message');
     Route::post('tickets/{id}/resolve', [ITTicket::class, 'markResolved'])->name('tickets.resolve');
+
 });
