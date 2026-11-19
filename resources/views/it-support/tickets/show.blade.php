@@ -173,10 +173,14 @@
                             </div>
                             <div class="p-3 rounded-3 chat-bubble-left" style="max-width: 80%;">
                                 <small class="d-block mb-1 fw-bold">
-                                    <i class="bi bi-person"></i> {{ $msg->user->name ?? 'User' }} (Mentor)
-                                </small>
-                                <small class="d-block mb-2 opacity-75" style="font-size: 0.7rem;">
-                                    {{ $msg->created_at->format('d M Y H:i') }}
+                                    <i class="bi bi-person"></i> {{ $msg->user->name ?? 'User' }} 
+                                    @if(($msg->user->role ?? '') === 'mentor')
+                                        (Mentor)
+                                    @elseif(($msg->user->role ?? '') === 'kepala_it')
+                                        (Kepala IT)
+                                    @elseif(($msg->user->role ?? '') === 'it_support')
+                                        (IT Support)
+                                    @endif
                                 </small>
                                 {{ $msg->message }}
                                 
