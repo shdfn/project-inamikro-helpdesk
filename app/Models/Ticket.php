@@ -21,6 +21,7 @@ class Ticket extends Model
         'attachment',
         'first_response_at',
         'resolved_at',
+        'resolution_note',
     ];
 
     protected $casts = [
@@ -52,6 +53,23 @@ class Ticket extends Model
         return $this->hasMany(TicketMessage::class)->orderBy('created_at', 'desc');
     }
 
+    // ============ AUTO-CLOSE 24 JAM ============
+
+    /**
+     * Tutup otomatis tiket berstatus 'Selesai' yang sudah lewat >= 24 jam
+     * sejak resolved_at tanpa konfirmasi Mentor.
+     */
+    public static function autoCloseExpiredTickets(): int
+    {
+        return static::where('status', 'Selesai')
+            ->whereNotNull('resolved_at')
+            ->where('resolved_at', '<=', now()->subHours(24))
+            ->update([
+                'status' => 'Ditutup',
+                'updated_at' => now(),
+            ]);
+    }
+
     // ============ ACCESSOR STATUS ============
 
     /**
@@ -66,7 +84,7 @@ class Ticket extends Model
             'Dibalas IT' => 'Dibalas IT — Menunggu Mentor',
             'Dibalas Mentor' => 'Dibalas Mentor — Menunggu IT',
             'Selesai' => 'Selesai — Menunggu Konfirmasi Mentor',
-            'Ditutup' => 'Ditutup — Dikonfirmasi Mentor',
+            'Ditutup' => 'Ditutup',
             default => $this->status,
         };
     }
@@ -78,7 +96,7 @@ class Ticket extends Model
     {
         return match ($this->status) {
             'Baru' => 'badge-soft-danger',
-            'Diproses' => 'badge-soft-warning',      // ← fallback status lama
+            'Diproses' => 'badge-soft-warning',
             'Ditangani IT' => 'badge-soft-warning',
             'Dibalas IT' => 'badge-soft-primary',
             'Dibalas Mentor' => 'badge-soft-info',
@@ -95,7 +113,7 @@ class Ticket extends Model
     {
         return match ($this->status) {
             'Baru' => 'plus-circle',
-            'Diproses' => 'arrow-repeat',            // ← fallback status lama
+            'Diproses' => 'arrow-repeat',
             'Ditangani IT' => 'arrow-repeat',
             'Dibalas IT' => 'chat-left-text',
             'Dibalas Mentor' => 'chat-left-dots',

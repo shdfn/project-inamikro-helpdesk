@@ -8,15 +8,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('profile_requests', function (Blueprint $table) {
-            $table->string('new_password')->nullable()->after('new_email');
-        });
+        if (!Schema::hasColumn('profile_requests', 'new_password')) {
+            Schema::table('profile_requests', function (Blueprint $table) {
+                $table->string('new_password')->nullable()->after('new_email');
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('profile_requests', function (Blueprint $table) {
-            $table->dropColumn('new_password');
-        });
+        if (Schema::hasColumn('profile_requests', 'new_password')) {
+            Schema::table('profile_requests', function (Blueprint $table) {
+                $table->dropColumn('new_password');
+            });
+        }
     }
 };

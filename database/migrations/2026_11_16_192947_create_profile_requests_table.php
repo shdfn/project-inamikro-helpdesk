@@ -1,25 +1,29 @@
 <?php
 
-namespace App\Models;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class ProfileRequest extends Model
+return new class extends Migration
 {
-    use HasFactory;
-
-    protected $fillable = [
-        'user_id',
-        'new_name',
-        'new_username',
-        'new_email',
-        'status',
-    ];
-
-    // Relasi ke User pemilik pengajuan
-    public function user()
+    public function up(): void
     {
-        return $this->belongsTo(User::class);
+        if (!Schema::hasTable('profile_requests')) {
+            Schema::create('profile_requests', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+                $table->string('new_name')->nullable();
+                $table->string('new_username')->nullable();
+                $table->string('new_email')->nullable();
+                $table->string('new_password')->nullable();
+                $table->string('status')->default('pending');
+                $table->timestamps();
+            });
+        }
     }
-}
+
+    public function down(): void
+    {
+        Schema::dropIfExists('profile_requests');
+    }
+};

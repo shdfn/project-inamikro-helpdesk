@@ -264,7 +264,7 @@
                         Ditutup
                     </div>
                     <div class="text-muted ms-3" style="font-size: 0.8rem;">
-                        {{ $isTutup ? 'Dikonfirmasi Mentor' : 'Belum ditutup' }}
+                        {{ $isTutup && $ticket->updated_at ? $ticket->updated_at->format('d M Y, H:i') : 'Belum ditutup' }}
                     </div>
                 </div>
 
@@ -281,7 +281,27 @@
                         IT Support sudah menandai tiket ini <strong>selesai</strong>.
                         Apakah kendala Anda sudah teratasi?
                     </p>
+                </div>
 
+                {{-- CATATAN PENYELESAIAN DARI IT SUPPORT --}}
+                @if($ticket->resolution_note)
+                    <div class="p-3 rounded-3 bg-light border mb-3 text-start">
+                        <small class="fw-bold text-dark d-block mb-1">
+                            <i class="bi bi-journal-check text-success"></i> Catatan Penyelesaian dari IT Support:
+                        </small>
+                        <div class="small text-secondary">{{ $ticket->resolution_note }}</div>
+                    </div>
+                @endif
+
+                {{-- INFO BATAS AUTO-CLOSE 24 JAM --}}
+                @if($ticket->resolved_at)
+                    <div class="alert alert-light border small text-muted mb-3 py-2">
+                        <i class="bi bi-clock-history"></i>
+                        Jika tidak ada konfirmasi hingga <strong>{{ $ticket->resolved_at->copy()->addHours(24)->format('d M Y, H:i') }}</strong>, tiket akan ditutup otomatis oleh sistem.
+                    </div>
+                @endif
+
+                <div class="text-center">
                     <form action="{{ route('mentor.tickets.confirm', $ticket->id) }}" method="POST"
                           onsubmit="return confirm('Yakin kendala sudah teratasi? Tiket akan ditutup.')">
                         @csrf
@@ -319,8 +339,14 @@
                 <div class="text-center">
                     <i class="bi bi-check-circle-fill text-secondary fs-1"></i>
                     <h6 class="fw-bold mt-2 mb-1">Tiket Sudah Ditutup</h6>
-                    <small class="text-muted">Anda sudah mengonfirmasi kendala selesai.</small>
+                    <small class="text-muted">Penanganan tiket ini telah selesai dan ditutup.</small>
                 </div>
+                @if($ticket->resolution_note)
+                    <div class="mt-3 pt-3 border-top text-start">
+                        <small class="fw-bold d-block text-muted mb-1">Catatan Penyelesaian dari IT Support:</small>
+                        <div class="p-2 rounded bg-light small">{{ $ticket->resolution_note }}</div>
+                    </div>
+                @endif
             </div>
         @elseif(in_array($ticket->status, ['Baru', 'Ditangani IT', 'Dibalas IT', 'Dibalas Mentor']))
             <div class="card card-custom p-4 border-start border-4 border-info">

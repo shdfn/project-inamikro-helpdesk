@@ -297,7 +297,7 @@
                         Ditutup
                     </div>
                     <div class="text-muted ms-3" style="font-size: 0.8rem;">
-                        {{ $isTutup ? 'Dikonfirmasi Mentor' : 'Belum ditutup' }}
+                        {{ $isTutup && $ticket->updated_at ? $ticket->updated_at->format('d M Y, H:i') : 'Belum ditutup' }}
                     </div>
                 </div>
 
@@ -309,15 +309,63 @@
             <div class="card card-custom p-4 text-center mb-4">
                 <h5 class="fw-bold">Konfirmasi Penyelesaian</h5>
                 <p class="text-muted small mb-3">
-                    Jika kendala sudah teratasi, klik tombol di bawah ini untuk mengirim konfirmasi ke Mentor.
+                    Jika kendala sudah teratasi, klik tombol di bawah ini untuk mengisi catatan penyelesaian dan mengirim konfirmasi ke Mentor.
                 </p>
-                <form action="{{ route('it.tickets.resolve', $ticket->id) }}" method="POST"
-                      onsubmit="return confirm('Yakin ingin menandai tiket ini selesai?')">
-                    @csrf
-                    <button type="submit" class="btn btn-inamikro w-100">
-                        <i class="bi bi-check-circle"></i> Konfirmasi Selesai
-                    </button>
-                </form>
+                <button type="button" class="btn btn-inamikro w-100" data-bs-toggle="modal" data-bs-target="#resolveTicketModal">
+                    <i class="bi bi-check-circle"></i> Konfirmasi Selesai
+                </button>
+            </div>
+
+            {{-- MODAL POP-UP ALASAN / CATATAN PENYELESAIAN --}}
+            <div class="modal fade" id="resolveTicketModal" tabindex="-1" aria-labelledby="resolveTicketModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <form action="{{ route('it.tickets.resolve', $ticket->id) }}" method="POST" id="resolveTicketForm" novalidate>
+                            @csrf
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-bold" id="resolveTicketModalLabel">
+                                    <i class="bi bi-check-circle text-success"></i> Catatan Penyelesaian Tiket
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                            </div>
+                            <div class="modal-body text-start">
+                                <p class="text-muted small mb-3">
+                                    Tuliskan alasan atau ringkasan tindakan penyelesaian untuk tiket <strong>#{{ $ticket->ticket_number }}</strong>.
+                                </p>
+
+                                <div class="mb-2">
+                                    <label for="resolutionNote" class="form-label fw-semibold">
+                                        Alasan / Catatan Penyelesaian <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea
+                                        name="resolution_note"
+                                        id="resolutionNote"
+                                        rows="4"
+                                        class="form-control @error('resolution_note') is-invalid @enderror"
+                                        placeholder="Contoh: Reset password akun mentor dan sudah diuji coba login berhasil..."
+                                        required
+                                        minlength="5"
+                                        maxlength="1000"
+                                    >{{ old('resolution_note') }}</textarea>
+                                    <div class="invalid-feedback" id="resolutionNoteFeedback">
+                                        @error('resolution_note')
+                                            {{ $message }}
+                                        @else
+                                            Alasan atau catatan penyelesaian wajib diisi (minimal 5 karakter).
+                                        @enderror
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block">Minimal 5 karakter, maksimal 1000 karakter.</small>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                <button type="submit" class="btn btn-inamikro">
+                                    <i class="bi bi-send-check"></i> Tandai Selesai
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         @endif
 
@@ -326,17 +374,29 @@
             <div class="card card-custom p-4 text-center border-start border-4 border-success">
                 <i class="bi bi-hourglass-split text-success fs-1"></i>
                 <h6 class="fw-bold mt-2 mb-1">Menunggu Konfirmasi Mentor</h6>
-                <small class="text-muted">
+                <small class="text-muted d-block">
                     Anda sudah menandai tiket ini selesai. Menunggu Mentor mengonfirmasi.
                 </small>
+                @if($ticket->resolution_note)
+                    <div class="mt-3 pt-3 border-top text-start">
+                        <small class="fw-bold d-block text-muted mb-1">Catatan Penyelesaian:</small>
+                        <div class="p-2 rounded bg-light small">{{ $ticket->resolution_note }}</div>
+                    </div>
+                @endif
             </div>
         @elseif($ticket->status === 'Ditutup')
             <div class="card card-custom p-4 text-center border-start border-4 border-secondary">
                 <i class="bi bi-check-circle-fill text-secondary fs-1"></i>
                 <h6 class="fw-bold mt-2 mb-1">Tiket Ditutup</h6>
-                <small class="text-muted">
-                    Tiket ini sudah selesai dan dikonfirmasi oleh Mentor.
+                <small class="text-muted d-block">
+                    Tiket ini sudah selesai dan ditutup.
                 </small>
+                @if($ticket->resolution_note)
+                    <div class="mt-3 pt-3 border-top text-start">
+                        <small class="fw-bold d-block text-muted mb-1">Catatan Penyelesaian:</small>
+                        <div class="p-2 rounded bg-light small">{{ $ticket->resolution_note }}</div>
+                    </div>
+                @endif
             </div>
         @endif
 
@@ -355,6 +415,42 @@
         if (chatArea) {
             chatArea.scrollTop = 0;
         }
+
+        const resolveForm = document.getElementById('resolveTicketForm');
+        const resolveNote = document.getElementById('resolutionNote');
+        const resolveFeedback = document.getElementById('resolutionNoteFeedback');
+        const resolveModalEl = document.getElementById('resolveTicketModal');
+
+        if (resolveForm && resolveNote) {
+            resolveForm.addEventListener('submit', function (e) {
+                const val = resolveNote.value.trim();
+                if (val.length < 5) {
+                    e.preventDefault();
+                    resolveNote.classList.add('is-invalid');
+                    if (resolveFeedback) {
+                        resolveFeedback.textContent = val.length === 0
+                            ? 'Alasan atau catatan penyelesaian wajib diisi.'
+                            : 'Catatan penyelesaian minimal 5 karakter.';
+                    }
+                    resolveNote.focus();
+                } else {
+                    resolveNote.classList.remove('is-invalid');
+                }
+            });
+
+            resolveNote.addEventListener('input', function () {
+                if (resolveNote.value.trim().length >= 5) {
+                    resolveNote.classList.remove('is-invalid');
+                }
+            });
+        }
+
+        @if(session('open_resolve_modal') || $errors->has('resolution_note'))
+            if (resolveModalEl && window.bootstrap) {
+                const modalInstance = bootstrap.Modal.getOrCreateInstance(resolveModalEl);
+                modalInstance.show();
+            }
+        @endif
     });
 </script>
 

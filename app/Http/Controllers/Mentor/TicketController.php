@@ -15,6 +15,8 @@ class TicketController extends Controller
     // ============ INDEX ============
     public function index(Request $request)
     {
+        Ticket::autoCloseExpiredTickets();
+
         $query = Ticket::where('mentor_id', auth()->id())->with(['category', 'messages.user']);
 
         // Search
@@ -44,7 +46,6 @@ class TicketController extends Controller
 
         $tickets = $query->orderBy('created_at', 'desc')->get();
 
-        // ⚠️ $counts tidak perlu lagi
         return view('mentor.tickets.index', compact('tickets'));
     }
     
@@ -93,7 +94,7 @@ class TicketController extends Controller
             'priority' => $request->priority,
             'category_id' => $request->category_id,
             'mentor_id' => auth()->id(),
-            'status' => 'Baru',                  // ← Status awal
+            'status' => 'Baru',
             'attachment' => $attachmentPath,
         ]);
 
@@ -104,6 +105,8 @@ class TicketController extends Controller
     // ============ SHOW ============
     public function show($id)
     {
+        Ticket::autoCloseExpiredTickets();
+
         $ticket = Ticket::with(['category', 'itSupport', 'messages.user'])
             ->where('mentor_id', auth()->id())
             ->findOrFail($id);
@@ -114,6 +117,8 @@ class TicketController extends Controller
     // ============ SEND MESSAGE ============
     public function sendMessage(Request $request, $id)
     {
+        Ticket::autoCloseExpiredTickets();
+
         $ticket = Ticket::where('mentor_id', auth()->id())->findOrFail($id);
 
         // Cegah kirim pesan kalau tiket sudah ditutup
@@ -142,13 +147,13 @@ class TicketController extends Controller
             'attachment' => $attachmentPath,
         ]);
 
-        // ⭐ Update status ke "Dibalas Mentor"
+        // Update status ke "Dibalas Mentor"
         // Hanya kalau IT sudah pernah balas (status "Ditangani IT" atau "Dibalas IT")
         if (in_array($ticket->status, ['Ditangani IT', 'Dibalas IT'])) {
             $ticket->update(['status' => 'Dibalas Mentor']);
         }
 
-        // 📬 NOTIFIKASI KE IT SUPPORT
+        // Notifikasi ke IT Support
         if ($ticket->it_support_id) {
             NotificationHelper::send(
                 $ticket->it_support_id,
@@ -166,19 +171,25 @@ class TicketController extends Controller
     // ============ CONFIRM RESOLUTION ============
     public function confirmResolution($id)
     {
+        Ticket::autoCloseExpiredTickets();
+
         $ticket = Ticket::where('mentor_id', auth()->id())->findOrFail($id);
 
-        // Hanya bisa konfirmasi kalau status sudah Selesai
+        if ($ticket->status === 'Ditutup') {
+            return back()->with('info', 'Tiket ini sudah berstatus Ditutup.');
+        }
+
+        // Hanya bisa konfirmasi kalau status masih Selesai (belum lewat 24 jam)
         if ($ticket->status !== 'Selesai') {
             return back()->with('error', 'Tiket belum bisa dikonfirmasi. Tunggu IT Support menandai selesai.');
         }
 
         $ticket->update([
             'status' => 'Ditutup',
-            'resolved_at' => now(),
+            'resolved_at' => $ticket->resolved_at ?? now(),
         ]);
 
-        // 📬 NOTIFIKASI KE IT SUPPORT
+        // Notifikasi ke IT Support
         if ($ticket->it_support_id) {
             NotificationHelper::send(
                 $ticket->it_support_id,

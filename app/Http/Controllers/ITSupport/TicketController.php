@@ -15,6 +15,8 @@ class TicketController extends Controller
     // ============ TIKET MASUK ============
     public function incoming(Request $request)
     {
+        Ticket::autoCloseExpiredTickets();
+
         $query = Ticket::with(['mentor', 'itSupport', 'category', 'messages.user'])
             ->whereIn('status', ['Baru', 'Ditangani IT', 'Dibalas IT', 'Dibalas Mentor']);
 
@@ -56,6 +58,8 @@ class TicketController extends Controller
     // ============ TIKET DITANGANI SAYA ============
     public function myTickets(Request $request)
     {
+        Ticket::autoCloseExpiredTickets();
+
         $query = Ticket::with(['mentor', 'itSupport', 'category'])
             ->where('it_support_id', auth()->id())
             ->whereIn('status', ['Ditangani IT', 'Dibalas IT', 'Dibalas Mentor']);
@@ -81,6 +85,8 @@ class TicketController extends Controller
     // ============ RIWAYAT & ARSIP ============
     public function history(Request $request)
     {
+        Ticket::autoCloseExpiredTickets();
+
         $query = Ticket::with(['mentor', 'category'])
             ->where('it_support_id', auth()->id())
             ->whereIn('status', ['Selesai', 'Ditutup']);
@@ -117,6 +123,8 @@ class TicketController extends Controller
     // ============ DETAIL TIKET ============
     public function show($id)
     {
+        Ticket::autoCloseExpiredTickets();
+
         $ticket = Ticket::with(['category', 'mentor', 'itSupport', 'messages.user'])
             ->findOrFail($id);
 
@@ -126,6 +134,8 @@ class TicketController extends Controller
     // ============ TANGANI / AMBIL ALIH TIKET ============
     public function assign($id)
     {
+        Ticket::autoCloseExpiredTickets();
+
         $ticket = Ticket::findOrFail($id);
 
         // Kalau tiket sudah ditangani IT lain, izinkan takeover (ambil alih)
@@ -175,6 +185,8 @@ class TicketController extends Controller
     // ============ KIRIM PESAN DISKUSI ============
     public function sendMessage(Request $request, $id)
     {
+        Ticket::autoCloseExpiredTickets();
+
         $ticket = Ticket::findOrFail($id);
 
         if ($ticket->it_support_id !== auth()->id()) {
@@ -226,8 +238,10 @@ class TicketController extends Controller
     }
 
     // ============ TANDAI SELESAI ============
-    public function markResolved($id)
+    public function markResolved(Request $request, $id)
     {
+        Ticket::autoCloseExpiredTickets();
+
         $ticket = Ticket::findOrFail($id);
 
         if ($ticket->it_support_id !== auth()->id()) {
@@ -238,9 +252,25 @@ class TicketController extends Controller
             return back()->with('error', 'Tiket tidak bisa ditandai selesai pada status ini.');
         }
 
+        $validator = Validator::make($request->all(), [
+            'resolution_note' => 'required|string|min:5|max:1000',
+        ], [
+            'resolution_note.required' => 'Alasan atau catatan penyelesaian wajib diisi.',
+            'resolution_note.min' => 'Catatan penyelesaian minimal 5 karakter.',
+            'resolution_note.max' => 'Catatan penyelesaian maksimal 1000 karakter.',
+        ]);
+
+        if ($validator->fails()) {
+            return back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('open_resolve_modal', true);
+        }
+
         $ticket->update([
             'status' => 'Selesai',
             'resolved_at' => now(),
+            'resolution_note' => trim($request->resolution_note),
         ]);
 
         // Notifikasi ke Mentor
@@ -259,6 +289,8 @@ class TicketController extends Controller
     // ============ EXPORT CSV ============
     public function export(Request $request)
     {
+        Ticket::autoCloseExpiredTickets();
+
         $query = Ticket::with(['mentor', 'itSupport', 'category'])
             ->where('it_support_id', auth()->id())
             ->whereIn('status', ['Selesai', 'Ditutup']);
