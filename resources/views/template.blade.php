@@ -477,5 +477,48 @@
     });
 </script>
 
+{{-- ⭐ MODAL PAKSA GANTI PASSWORD ⭐ --}}
+@auth
+    @if(auth()->user()->is_temporary_password)
+        <div class="modal fade show" id="modalGantiPassword" data-bs-backdrop="static" data-bs-keyboard="false" style="display:block; background:rgba(0,0,0,0.7);" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title"><i class="bi bi-shield-exclamation"></i> Keamanan Akun</h5>
+                    </div>
+                    <!-- Form mengarah ke route profile.update dengan method PUT -->
+                    <form action="{{ route('profile.update') }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <div class="modal-body">
+                            <p class="fw-bold">Anda menggunakan kata sandi sementara.</p>
+                            <p class="text-muted small">Demi keamanan, Anda <strong>wajib</strong> mengganti kata sandi Anda sekarang.</p>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Kata Sandi Baru</label>
+                                <input type="password" name="password" class="form-control" placeholder="Minimal 8 karakter" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Konfirmasi Kata Sandi Baru</label>
+                                <input type="password" name="password_confirmation" class="form-control" placeholder="Ulangi sandi baru" required>
+                            </div>
+                            {{-- Hidden fields agar validasi di controller tidak error --}}
+                            <input type="hidden" name="name" value="{{ auth()->user()->name }}">
+                            <input type="hidden" name="username" value="{{ auth()->user()->username }}">
+                            <input type="hidden" name="email" value="{{ auth()->user()->email }}">
+                            
+                            {{-- ⭐ INPUT INI YANG MEMBUAT POP-UP HILANG ⭐ --}}
+                            <input type="hidden" name="clear_temporary" value="1">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-inamikro w-100">Simpan Sandi Baru</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+@endauth
+
 </body>
 </html>

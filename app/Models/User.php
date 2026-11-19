@@ -23,7 +23,8 @@ class User extends Authenticatable
         'username',
         'email',
         'password',
-        'role',       // ← DITAMBAHKAN
+        'role',
+        'is_temporary_password',
     ];
 
     /**
@@ -46,6 +47,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_temporary_password' => 'boolean',
         ];
     }
 

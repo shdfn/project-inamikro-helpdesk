@@ -54,7 +54,7 @@
                     <label class="form-label fw-bold small">Kata Sandi Baru</label>
                     <input type="password" name="password" 
                            class="form-control @error('password') is-invalid @enderror" 
-                           placeholder="Minimal 6 karakter">
+                           placeholder="Minimal 8 karakter">
                     @error('password')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
