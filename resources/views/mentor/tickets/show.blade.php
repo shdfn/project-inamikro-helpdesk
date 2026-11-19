@@ -94,10 +94,19 @@
 
                         @if($ticket->attachment)
                             <div class="mt-2 pt-2 border-top border-danger">
-                                <a href="{{ asset('storage/' . $ticket->attachment) }}" download
-                                class="text-dark small text-decoration-none">
-                                    <i class="bi bi-paperclip"></i> {{ basename($ticket->attachment) }}
-                                </a>
+                                @if(in_array(strtolower(pathinfo($ticket->attachment, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif', 'webp']))
+                                    <a href="{{ asset('storage/' . $ticket->attachment) }}" target="_blank" title="Klik untuk memperbesar">
+                                        <img src="{{ asset('storage/' . $ticket->attachment) }}" 
+                                            alt="Lampiran Kendala" 
+                                            class="img-fluid rounded mt-1" 
+                                            style="max-height: 200px; object-fit: contain; border: 1px solid #ddd; padding: 5px;">
+                                    </a>
+                                @else
+                                    <a href="{{ asset('storage/' . $ticket->attachment) }}" download
+                                    class="text-dark small text-decoration-none">
+                                        <i class="bi bi-paperclip"></i> {{ basename($ticket->attachment) }}
+                                    </a>
+                                @endif
                             </div>
                         @endif
                     </div>
@@ -225,6 +234,9 @@
     {{-- KOLOM KANAN --}}
     {{-- ═══════════════════════════════════════════ --}}
     <div class="col-md-5">
+
+        {{-- Riwayat Penanganan --}}
+        @include('tickets.handler-history')
 
         {{-- TIMELINE SLA --}}
         <div class="card card-custom p-4 mb-4">

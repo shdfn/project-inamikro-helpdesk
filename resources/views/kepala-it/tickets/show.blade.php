@@ -18,9 +18,6 @@
             <i class="bi bi-{{ $ticket->status_icon }}"></i> {{ $ticket->status_label }}
         </span>
         <span class="badge badge-soft-danger px-3 py-2 rounded-pill">{{ $ticket->priority }}</span>
-        <span class="badge badge-soft-secondary px-3 py-2 rounded-pill">
-            <i class="bi bi-eye"></i> Mode Kepala IT (Read-Only)
-        </span>
     </div>
 </div>
 
@@ -69,11 +66,10 @@
             </table>
         </div>
 
-        {{-- DISKUSI (Read-Only) --}}
+        {{-- DISKUSI --}}
         <div class="card card-custom p-4">
             <h5 class="fw-bold mb-3">
                 <i class="bi bi-chat-left-text"></i> Diskusi
-                <small class="text-muted fw-normal">(Read-Only)</small>
             </h5>
 
             <div class="chat-area" style="max-height: 450px; overflow-y: auto; padding-right: 8px;">
@@ -100,10 +96,19 @@
 
                         @if($ticket->attachment)
                             <div class="mt-2 pt-2 border-top border-danger">
-                                <a href="{{ asset('storage/' . $ticket->attachment) }}" download
-                                class="text-dark small text-decoration-none">
-                                    <i class="bi bi-paperclip"></i> {{ basename($ticket->attachment) }}
-                                </a>
+                                @if(in_array(strtolower(pathinfo($ticket->attachment, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif', 'webp']))
+                                    <a href="{{ asset('storage/' . $ticket->attachment) }}" target="_blank" title="Klik untuk memperbesar">
+                                        <img src="{{ asset('storage/' . $ticket->attachment) }}" 
+                                            alt="Lampiran Kendala" 
+                                            class="img-fluid rounded mt-1" 
+                                            style="max-height: 200px; object-fit: contain; border: 1px solid #ddd; padding: 5px;">
+                                    </a>
+                                @else
+                                    <a href="{{ asset('storage/' . $ticket->attachment) }}" download
+                                    class="text-dark small text-decoration-none">
+                                        <i class="bi bi-paperclip"></i> {{ basename($ticket->attachment) }}
+                                    </a>
+                                @endif
                             </div>
                         @endif
                     </div>
@@ -123,16 +128,17 @@
                 {{-- PESAN DISKUSI --}}
                 @forelse($ticket->messages as $msg)
                     @php
-                        $isItSupport = $msg->user && $msg->user->role === 'it_support';
+                        // Cek apakah pengirim adalah staf IT (IT Support ATAU Kepala IT)
+                        $isItStaff = $msg->user && in_array($msg->user->role, ['it_support', 'kepala_it']);
                     @endphp
 
-                    @if($isItSupport)
-                        {{-- Pesan dari IT Support (kanan) --}}
+                    @if($isItStaff)
+                        {{-- Pesan dari Staf IT (kanan) --}}
                         <div class="d-flex mb-3 justify-content-end">
                             <div class="p-3 rounded-3 chat-bubble-right" style="max-width: 80%;">
                                 <small class="d-block text-end mb-1 fw-bold">
                                     <i class="bi bi-person-badge"></i>
-                                    (IT Support) {{ $msg->user->name }}
+                                    ({{ $msg->user->role === 'kepala_it' ? 'Kepala IT' : 'IT Support' }}) {{ $msg->user->name }}
                                 </small>
                                 <small class="d-block text-end mb-2 opacity-75" style="font-size: 0.7rem;">
                                     {{ $msg->created_at->format('d M Y H:i') }}
@@ -202,24 +208,43 @@
                 @endforelse
             </div>
 
-            {{-- INFO READ-ONLY --}}
-            <div class="mt-3 pt-3 border-top">
-                <div class="alert alert-secondary mb-0">
-                    <i class="bi bi-eye"></i>
-                    <small>
-                        <strong>Mode Kepala IT (Read-Only).</strong>
-                        Anda hanya dapat melihat diskusi. Untuk ikut berkomunikasi, hubungi IT Support atau Mentor terkait.
-                    </small>
+            {{-- FORM KIRIM PESAN --}}
+            @if($ticket->status !== 'Ditutup')
+                <div class="mt-3 pt-3 border-top">
+                    <form action="{{ route('kepala.tickets.message', $ticket->id) }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="input-group">
+                            <label for="fileInput" class="input-group-text bg-white border-end-0" style="cursor: pointer;">
+                                <i class="bi bi-paperclip"></i>
+                            </label>
+                            <input type="file" id="fileInput" name="attachment" class="d-none">
+                            <input type="text" name="message" class="form-control border-start-0"
+                                   placeholder="Tulis pesan..." required>
+                            <button class="btn btn-inamikro" type="submit">
+                                <i class="bi bi-send"></i> Kirim
+                            </button>
+                        </div>
+                        <small id="fileName" class="text-muted d-block mt-1"></small>
+                    </form>
                 </div>
-            </div>
+            @else
+                <div class="mt-3 pt-3 border-top">
+                    <div class="alert alert-secondary mb-0 text-center">
+                        <i class="bi bi-lock-fill"></i>
+                        <small>Tiket sudah ditutup. Diskusi tidak dapat dilanjutkan.</small>
+                    </div>
+                </div>
+            @endif
         </div>
-
     </div>
 
     {{-- ═══════════════════════════════════════════ --}}
     {{-- KOLOM KANAN --}}
     {{-- ═══════════════════════════════════════════ --}}
     <div class="col-md-5">
+
+        {{-- Riwayat Penanganan --}}
+        @include('tickets.handler-history')
 
         {{-- TIMELINE SLA --}}
         <div class="card card-custom p-4 mb-4">
@@ -360,6 +385,10 @@
 </div>
 
 <script>
+    document.getElementById('fileInput')?.addEventListener('change', function(e) {
+        document.getElementById('fileName').textContent = e.target.files[0]?.name ?? '';
+    });
+
     document.addEventListener('DOMContentLoaded', function () {
         const chatArea = document.querySelector('.chat-area');
         if (chatArea) {
