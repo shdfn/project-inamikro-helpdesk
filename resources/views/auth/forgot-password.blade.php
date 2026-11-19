@@ -19,7 +19,7 @@
     <div class="login-card">
         <div class="text-center mb-4">
             <img src="{{ asset('images/logo-inamikro.png') }}" alt="INAmikro" style="height: 50px;" class="mb-2">
-            <p class="text-muted small mb-0">Reset Kata Sandi Akun Anda</p>
+            <p class="text-muted small mb-0">Permintaan Reset Kata Sandi</p>
         </div>
 
         @if ($errors->any())
@@ -28,11 +28,19 @@
             </div>
         @endif
 
-        <p class="text-muted small">Masukkan email terdaftar Anda. Sistem akan membuat tautan reset kata sandi.</p>
+        @if (session('status'))
+            <div class="alert alert-success small py-2">
+                <i class="bi bi-check-circle"></i> {{ session('status') }}
+            </div>
+        @endif
+
+        <p class="text-muted small text-center mb-4">
+            Masukkan email terdaftar Anda. Sistem akan mengirimkan permintaan ke <strong>IT Support</strong> untuk mereset sandi Anda.
+        </p>
 
         <form method="POST" action="{{ route('password.email') }}">
             @csrf
-            <div class="mb-3">
+            <div class="mb-4">
                 <label class="form-label small fw-bold">Email Terdaftar</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-envelope"></i></span>
@@ -41,7 +49,9 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-inamikro w-100 py-2 fw-bold">Kirim Link Reset</button>
+            <button type="submit" class="btn btn-inamikro w-100 py-2 fw-bold">
+                Minta Reset ke IT Support
+            </button>
         </form>
 
         <div class="text-center mt-3">

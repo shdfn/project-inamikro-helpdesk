@@ -24,8 +24,8 @@ class TicketController extends Controller
             $search = $request->q;
             $query->where(function ($q) use ($search) {
                 $q->where('ticket_number', 'like', "%{$search}%")
-                ->orWhere('title', 'like', "%{$search}%")
-                ->orWhere('description', 'like', "%{$search}%");
+                  ->orWhere('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -78,7 +78,7 @@ class TicketController extends Controller
             return redirect()->route('mentor.tickets.create')->withErrors($validator)->withInput();
         }
 
-        // Generate ticket_number yang aman
+        // Generate ticket_number yang aman (pakai max id)
         $lastId = Ticket::max('id') ?? 0;
         $ticketNumber = 'TK-' . str_pad($lastId + 1, 3, '0', STR_PAD_LEFT);
 
@@ -202,5 +202,34 @@ class TicketController extends Controller
         }
 
         return back()->with('success', 'Tiket berhasil dikonfirmasi selesai.');
+    }
+
+    // ============ CLOSE TICKET (BARU) ============
+    public function closeTicket($id)
+    {
+        $ticket = Ticket::where('mentor_id', auth()->id())->findOrFail($id);
+
+        if ($ticket->status === 'Ditutup') {
+            return back()->with('error', 'Tiket sudah ditutup.');
+        }
+
+        $ticket->update([
+            'status' => 'Ditutup',
+            'resolved_at' => $ticket->resolved_at ?? now(),
+        ]);
+
+        // Notifikasi ke IT Support
+        if ($ticket->it_support_id) {
+            NotificationHelper::send(
+                $ticket->it_support_id,
+                $ticket->id,
+                auth()->id(),
+                'closed',
+                'Tiket Ditutup oleh Mentor',
+                'Tiket #' . $ticket->ticket_number . ' telah ditutup oleh Mentor.'
+            );
+        }
+
+        return back()->with('success', 'Tiket berhasil ditutup.');
     }
 }
