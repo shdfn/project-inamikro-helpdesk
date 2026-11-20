@@ -4,13 +4,42 @@
 
 @section('konten')
 
-<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+{{-- ═══════════════════════════════════════════ --}}
+{{-- HEADER: Judul KIRI, Filter & Tombol KANAN --}}
+{{-- ═══════════════════════════════════════════ --}}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
     <div>
         <h3 class="fw-bold mb-1">Selamat datang, {{ auth()->user()->name }} 👋</h3>
         <p class="text-muted mb-0">Pantau performa IT Support dan perkembangan tiket operasional.</p>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <a href="{{ route('kepala.tickets.export') }}" class="btn btn-dark btn-sm">
+
+    {{-- Kanan: Filter + Unduh --}}
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        {{-- Filter Periode --}}
+        <form method="GET" class="d-flex align-items-center gap-2">
+            <div class="input-group input-group-sm shadow-sm" style="width: auto;">
+                <select name="month" class="form-select" style="width: 130px; cursor: pointer;">
+                    @for($i = 1; $i <= 12; $i++)
+                        <option value="{{ $i }}" {{ $month == $i ? 'selected' : '' }}>
+                            {{ \Carbon\Carbon::create()->month((int) $i)->translatedFormat('F') }}
+                        </option>
+                    @endfor
+                </select>
+                <select name="year" class="form-select" style="width: 95px; cursor: pointer;">
+                    @for($y = now()->year; $y >= now()->year - 3; $y--)
+                        <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>
+                            {{ $y }}
+                        </option>
+                    @endfor
+                </select>
+            </div>
+            <button type="submit" class="btn btn-inamikro btn-sm px-3 shadow-sm">
+                Terapkan
+            </button>
+        </form>
+
+        {{-- Tombol Unduh Laporan --}}
+        <a href="{{ route('kepala.tickets.export') }}" class="btn btn-dark btn-sm shadow-sm">
             <i class="bi bi-download"></i> Unduh Laporan
         </a>
     </div>
@@ -24,7 +53,7 @@
         <div class="card card-custom p-3">
             <small class="text-muted fw-bold">TOTAL TIKET</small>
             <h2 class="fw-bold my-1">{{ $total }}</h2>
-            <small class="text-success"><i class="bi bi-arrow-up"></i> 12% dari periode lalu</small>
+            <small class="text-muted">Bulan {{ \Carbon\Carbon::create()->month((int) $month)->translatedFormat('F') }} {{ $year }}</small>
         </div>
     </div>
     <div class="col-md">
@@ -48,17 +77,15 @@
     <div class="col-md">
         <div class="card card-custom p-3">
             <small class="text-muted fw-bold">AVG RESPONSE</small>
-            <h2 class="fw-bold my-1">
-                {{ $avgResponse }}
-            </h2>
-            <small class="text-success"><i class="bi bi-arrow-down"></i> lebih cepat dari target</small>
+            <h2 class="fw-bold my-1">{{ $avgResponse }}</h2>
+            <small class="text-muted">Bulan {{ \Carbon\Carbon::create()->month((int) $month)->translatedFormat('F') }} {{ $year }}</small>
         </div>
     </div>
     <div class="col-md">
         <div class="card card-custom p-3">
             <small class="text-muted fw-bold">SLA KESELURUHAN</small>
             <h2 class="fw-bold my-1" style="color:var(--inamikro-red);">{{ $slaPercent }}%</h2>
-            <small class="text-muted">Target ≥ 90%</small>
+            <small class="text-muted">Target ≥ 90% | Bulan {{ \Carbon\Carbon::create()->month((int) $month)->translatedFormat('F') }}</small>
         </div>
     </div>
 </div>
@@ -73,7 +100,9 @@
                 <i class="bi bi-bar-chart-line text-danger"></i> Performa SLA IT Support
             </h5>
             <small class="text-muted d-block mb-3">Persentase respon sesuai target SLA (≤ 30 menit)</small>
-            <canvas id="chartPerformaIT" height="200"></canvas>
+            <div style="position: relative; height: 220px; width: 100%;">
+                <canvas id="chartPerformaIT"></canvas>
+            </div>
         </div>
     </div>
     <div class="col-md-6">
@@ -82,7 +111,9 @@
                 <i class="bi bi-exclamation-circle text-danger"></i> Kendala Paling Sering
             </h5>
             <small class="text-muted d-block mb-3">Top 5 kategori dengan tiket terbanyak</small>
-            <canvas id="chartKategori" height="200"></canvas>
+            <div style="position: relative; height: 220px; width: 100%;">
+                <canvas id="chartKategori"></canvas>
+            </div>
         </div>
     </div>
 </div>
@@ -97,8 +128,10 @@
                 <i class="bi bi-pie-chart text-danger"></i> Distribusi Status Tiket
             </h5>
             <div class="row align-items-center">
-                <div class="col-md-5">
-                    <canvas id="chartStatus" height="200"></canvas>
+                <div class="col-md-5 text-center">
+                    <div style="position: relative; height: 200px; width: 100%;">
+                        <canvas id="chartStatus"></canvas>
+                    </div>
                 </div>
                 <div class="col-md-7">
                     <div class="row g-2">
@@ -240,6 +273,7 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false, // Agar mengikuti tinggi wrapper
                     plugins: {
                         legend: { display: false },
                         tooltip: {
@@ -287,6 +321,7 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false }
                     },
@@ -321,6 +356,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    cutout: '65%',
                     plugins: {
                         legend: { display: false },
                         tooltip: {

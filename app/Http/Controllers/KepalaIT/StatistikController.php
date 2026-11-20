@@ -4,18 +4,46 @@ namespace App\Http\Controllers\KepalaIT;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class StatistikController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $totalTiket = Ticket::count();
-        $totalSelesai = Ticket::whereIn('status', ['Selesai', 'Ditutup'])->count();
-        $totalDitutup = Ticket::where('status', 'Ditutup')->count();
-        $sedangDitangani = Ticket::whereIn('status', ['Baru', 'Ditangani IT', 'Dibalas IT', 'Dibalas Mentor'])->count();
+        $month = $request->input('month', now()->month);
+        $year = $request->input('year', now()->year);
 
-        // Tren 6 bulan terakhir
+        // ═══ Statistik Global (bulan ini) ═══
+        $totalTiket = Ticket::whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
+            ->count();
+
+        $totalSelesai = Ticket::whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
+            ->whereIn('status', ['Selesai', 'Ditutup'])
+            ->count();
+
+        $totalDitutup = Ticket::whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
+            ->where('status', 'Ditutup')
+            ->count();
+
+        $sedangDitangani = Ticket::whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
+            ->whereIn('status', ['Baru', 'Ditangani IT', 'Dibalas IT', 'Dibalas Mentor'])
+            ->count();
+
+        // ═══ Avg Penyelesaian (format hari/jam/menit) ═══
+        $avgResolutionRaw = Ticket::whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
+            ->whereNotNull('resolved_at')
+            ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, resolved_at)) as avg_minutes')
+            ->value('avg_minutes') ?? 0;
+
+        $avgResolution = $this->formatDuration($avgResolutionRaw);
+
+        // ═══ Tren 6 Bulan ═══
         $trenBulanan = [];
         for ($i = 5; $i >= 0; $i--) {
             $date = now()->subMonths($i);
@@ -29,26 +57,11 @@ class StatistikController extends Controller
             ];
         }
 
-        // Rata-rata waktu penyelesaian
-    $avgResolutionMinutes = Ticket::whereNotNull('resolved_at')
-        ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, resolved_at)) as avg_minutes')
-        ->value('avg_minutes') ?? 0;
-
-    // Konversi menit menjadi Hari, Jam, Menit
-        $hari = floor($avgResolutionMinutes / 1440);
-        $jam = floor(($avgResolutionMinutes % 1440) / 60);
-        $menit = round($avgResolutionMinutes % 60);
-
-        $parts = [];
-        if ($hari > 0) $parts[] = $hari . ' Hari';
-        if ($jam > 0) $parts[] = $jam . ' Jam';
-        if ($menit > 0 || empty($parts)) $parts[] = $menit . ' Menit';
-
-        $avgResolution = implode(' ', $parts);
-
-        // Kategori teratas
+        // ═══ Kategori Top ═══
         $kategoriTop = DB::table('tickets')
             ->join('categories', 'tickets.category_id', '=', 'categories.id')
+            ->whereMonth('tickets.created_at', $month)
+            ->whereYear('tickets.created_at', $year)
             ->select('categories.name', DB::raw('COUNT(*) as total'))
             ->groupBy('categories.name')
             ->orderByDesc('total')
@@ -57,7 +70,22 @@ class StatistikController extends Controller
 
         return view('kepala-it.statistik', compact(
             'totalTiket', 'totalSelesai', 'totalDitutup', 'sedangDitangani',
-            'trenBulanan', 'avgResolution', 'kategoriTop'
+            'avgResolution', 'trenBulanan', 'kategoriTop', 'month', 'year'
         ));
+    }
+
+    private function formatDuration($minutes)
+    {
+        if ($minutes < 60) {
+            return round($minutes, 2) . ' menit';
+        } elseif ($minutes < 1440) {
+            $hours = floor($minutes / 60);
+            $mins = round($minutes % 60);
+            return $hours . ' jam ' . $mins . ' menit';
+        } else {
+            $days = floor($minutes / 1440);
+            $hours = floor(($minutes % 1440) / 60);
+            return $days . ' hari ' . $hours . ' jam';
+        }
     }
 }

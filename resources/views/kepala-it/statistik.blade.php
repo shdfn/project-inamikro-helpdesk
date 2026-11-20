@@ -71,7 +71,7 @@
     </div>
 
     {{-- 5. Avg Resolution --}}
-    <div class="col">
+    <div class="col-6 col-md-4 col-lg">
         <div class="card card-custom p-3 h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <small class="text-muted fw-bold" style="font-size: 0.7rem;">AVG PENYELESAIAN</small>

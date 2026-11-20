@@ -50,9 +50,8 @@
             <h2 class="fw-bold my-2">
                 {{ $avgRespon }}
             </h2>
-            <small class="text-success" style="font-size: 0.75rem;">
-                <i class="bi bi-check-circle"></i> Target &lt; 30 menit
-            </small>
+            <small class="text-muted" style="font-size: 0.75rem;">
+            Target &lt; 30 menit | {{ \Carbon\Carbon::create()->month((int) $month)->translatedFormat('F') }} {{ $year }}            </small>
         </div>
     </div>
 
@@ -62,7 +61,8 @@
             <small class="text-muted fw-bold" style="font-size: 0.7rem;">PENYELESAIAN SLA</small>
             <h2 class="fw-bold my-2 text-success">{{ $persenSLA }}%</h2>
             <small class="text-muted" style="font-size: 0.75rem;">
-                {{ $dalamSLA }} dari {{ $totalSelesai }} tiket
+                {{-- Menggunakan $dalamSLA dan $totalRespon (bukan $totalSelesai) --}}
+                {{ $dalamSLA }} dari {{ $totalRespon }} tiket
             </small>
         </div>
     </div>

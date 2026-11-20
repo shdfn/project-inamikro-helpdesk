@@ -10,47 +10,35 @@ use Illuminate\Support\Facades\DB;
 
 class MonitoringController extends Controller
 {
-    /**
-     * Halaman Monitoring Eksekutif (default).
-     * Menampilkan: rata-rata respon, penyelesaian SLA, teknisi on-duty, kepuasan, kategori teratas.
-     */
     public function index(Request $request)
     {
-        // Filter bulan (default: bulan ini)
         $month = $request->input('month', now()->month);
         $year = $request->input('year', now()->year);
 
+        // ═══ First Response Time ═══
         $avgResponRaw = Ticket::whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
             ->whereNotNull('first_response_at')
             ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_response_at)) as avg_minutes')
             ->value('avg_minutes') ?? 0;
 
-        // Format otomatis (Menit -> Jam -> Hari)
-        if ($avgResponRaw < 60) {
-            $avgRespon = round($avgResponRaw, 2) . ' menit';
-        } elseif ($avgResponRaw < 1440) { // < 24 jam
-            $avgRespon = round($avgResponRaw / 60, 2) . ' jam';
-        } else {
-            $days = floor($avgResponRaw / 1440);
-            $hours = floor(($avgResponRaw % 1440) / 60);
-            $avgRespon = $days . ' hari ' . $hours . ' jam';
-        }
-        // Penyelesaian SLA (< 24 jam)
-        $totalSelesai = Ticket::whereMonth('created_at', $month)
+        $avgRespon = $this->formatDuration($avgResponRaw);
+
+        // ═══ SLA % (≤ 30 menit) ═══
+        $totalRespon = Ticket::whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
-            ->whereIn('status', ['Selesai', 'Ditutup'])
+            ->whereNotNull('first_response_at')
             ->count();
 
         $dalamSLA = Ticket::whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
-            ->whereNotNull('resolved_at')
-            ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, resolved_at) <= 24')
+            ->whereNotNull('first_response_at')
+            ->whereRaw('TIMESTAMPDIFF(MINUTE, created_at, first_response_at) <= 30')
             ->count();
 
-        $persenSLA = $totalSelesai > 0 ? round(($dalamSLA / $totalSelesai) * 100, 1) : 0;
+        $persenSLA = $totalRespon > 0 ? round(($dalamSLA / $totalRespon) * 100, 2) : 0;
 
-        // Teknisi On-Duty (yang sedang menangani tiket)
+        // ═══ Teknisi On-Duty ═══
         $onDuty = User::where('role', 'it_support')
             ->withCount([
                 'ticketsAsSupport as sedang_ditangani' => function ($q) {
@@ -62,7 +50,7 @@ class MonitoringController extends Controller
             ])
             ->get();
 
-        // 5 Kategori Kendala Teratas (bulan ini)
+        // ═══ Kategori Teratas ═══
         $kategoriTeratas = DB::table('tickets')
             ->join('categories', 'tickets.category_id', '=', 'categories.id')
             ->whereMonth('tickets.created_at', $month)
@@ -74,26 +62,28 @@ class MonitoringController extends Controller
             ->get();
 
         return view('kepala-it.monitoring', compact(
-            'avgRespon', 'persenSLA', 'totalSelesai', 'dalamSLA',
+            'avgRespon', 'persenSLA', 'totalRespon', 'dalamSLA',
             'onDuty', 'kategoriTeratas', 'month', 'year'
         ));
     }
 
-    /**
-     * Alias method SLA — sama dengan index().
-     * Dipakai oleh route `kepala.monitoring.sla`.
-     */
-    public function sla(Request $request)
-    {
-        return $this->index($request);
-    }
-
-    /**
-     * Alias method statistik — redirect ke halaman statistik.
-     * Dipakai oleh route `kepala.monitoring.statistik`.
-     */
     public function statistik()
     {
         return redirect()->route('kepala.statistik');
+    }
+
+    private function formatDuration($minutes)
+    {
+        if ($minutes < 60) {
+            return round($minutes, 2) . ' menit';
+        } elseif ($minutes < 1440) {
+            $hours = floor($minutes / 60);
+            $mins = round($minutes % 60);
+            return $hours . ' jam ' . $mins . ' menit';
+        } else {
+            $days = floor($minutes / 1440);
+            $hours = floor(($minutes % 1440) / 60);
+            return $days . ' hari ' . $hours . ' jam';
+        }
     }
 }
