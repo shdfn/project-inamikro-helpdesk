@@ -399,6 +399,7 @@
         [data-bs-theme="dark"] .chat-bubble-left a {
             color: #90caf9 !important;
         }
+        
     </style>
 </head>
 <body>

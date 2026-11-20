@@ -15,16 +15,14 @@ class MonitoringController extends Controller
         $month = $request->input('month', now()->month);
         $year = $request->input('year', now()->year);
 
-        // ═══ First Response Time ═══
+        // ═══ 1. First Response Time & SLA Global ═══
         $avgResponRaw = Ticket::whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
             ->whereNotNull('first_response_at')
             ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_response_at)) as avg_minutes')
             ->value('avg_minutes') ?? 0;
-
         $avgRespon = $this->formatDuration($avgResponRaw);
 
-        // ═══ SLA % (≤ 30 menit) ═══
         $totalRespon = Ticket::whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
             ->whereNotNull('first_response_at')
@@ -38,42 +36,44 @@ class MonitoringController extends Controller
 
         $persenSLA = $totalRespon > 0 ? round(($dalamSLA / $totalRespon) * 100, 2) : 0;
 
-        // ═══ Teknisi On-Duty & Metrik Per IT ═══
+        // ═══ 2, 3, & 4. Metrik Per IT Support ═══
         $onDuty = User::where('role', 'it_support')
             ->get()
             ->map(function ($it) use ($month, $year) {
-                // 1. Hitung Total Tiket (yang direspons)
+                // [Poin 4] Total Tiket & Status
                 $totalTiket = Ticket::where('it_support_id', $it->id)
                     ->whereMonth('created_at', $month)
                     ->whereYear('created_at', $year)
-                    ->whereNotNull('first_response_at')
                     ->count();
 
-                // 2. Hitung Tiket Selesai
                 $tiketSelesai = Ticket::where('it_support_id', $it->id)
                     ->whereMonth('created_at', $month)
                     ->whereYear('created_at', $year)
                     ->whereIn('status', ['Selesai', 'Ditutup'])
                     ->count();
 
-                // 3. Hitung Tiket Menggantung (Masih aktif)
                 $tiketMenggantung = Ticket::where('it_support_id', $it->id)
                     ->whereMonth('created_at', $month)
                     ->whereYear('created_at', $year)
                     ->whereIn('status', ['Baru', 'Ditangani IT', 'Dibalas IT', 'Dibalas Mentor'])
                     ->count();
 
-                // 4. Hitung SLA % (Respon <= 30 menit)
+                // [Poin 1] First Response Time (Rata-rata & Persentase)
                 $slaOk = Ticket::where('it_support_id', $it->id)
                     ->whereMonth('created_at', $month)
                     ->whereYear('created_at', $year)
                     ->whereNotNull('first_response_at')
                     ->whereRaw('TIMESTAMPDIFF(MINUTE, created_at, first_response_at) <= 30')
                     ->count();
-                
-                $slaPct = $totalTiket > 0 ? round(($slaOk / $totalTiket) * 100, 2) : 0;
 
-                // 5. Hitung Avg Response
+                $totalResponIT = Ticket::where('it_support_id', $it->id)
+                    ->whereMonth('created_at', $month)
+                    ->whereYear('created_at', $year)
+                    ->whereNotNull('first_response_at')
+                    ->count();
+                
+                $slaPct = $totalResponIT > 0 ? round(($slaOk / $totalResponIT) * 100, 2) : 0;
+
                 $avgMinutes = Ticket::where('it_support_id', $it->id)
                     ->whereMonth('created_at', $month)
                     ->whereYear('created_at', $year)
@@ -81,29 +81,49 @@ class MonitoringController extends Controller
                     ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_response_at)) as m')
                     ->value('m') ?? 0;
 
-                // Data tambahan untuk tabel & chart
+                // [Poin 2] Total Waktu Penyelesaian (Resolution Time)
+                $avgResolutionRaw = Ticket::where('it_support_id', $it->id)
+                    ->whereMonth('created_at', $month)
+                    ->whereYear('created_at', $year)
+                    ->whereNotNull('resolved_at')
+                    ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, resolved_at)) as m')
+                    ->value('m') ?? 0;
+
+                // [Poin 3] Keaktifan & Keterlibatan (Fallback: pakai data dari tabel tickets)
+                // Karena tabel log belum ada, kita asumsikan "terlibat" = total tiket yang dihandle
+                $tiketTerlibat = $totalTiket; 
+                
+                // Menggunakan total tiket sebagai proxy jumlah aktivitas jika log belum ada
+                $jumlahAktivitas = $totalTiket;
+
+                // First Responder: Berapa banyak tiket di mana dia adalah IT yang merespon pertama
+                // Karena belum ada tabel log, kita asumsikan semua tiket yang dia tangani adalah respon pertamanya
+                $jadiFirstResponder = $totalResponIT; 
+
+                // --- Memasukkan data ke object ---
                 $it->total_tiket = $totalTiket;
                 $it->tiket_selesai = $tiketSelesai;
                 $it->tiket_menggantung = $tiketMenggantung;
                 $it->sla_percentage = $slaPct;
                 $it->avg_response = $this->formatDuration($avgMinutes);
+                $it->avg_resolution = $this->formatDuration($avgResolutionRaw); 
                 
-                // ✅ Logika Label & Warna Baru (Sangat Cepat, Cepat, Lambat, Sangat Lambat)
+                // Proxy data untuk Poin 3
+                $it->jumlah_balasan = $jumlahAktivitas;
+                $it->tiket_terlibat = $tiketTerlibat;
+                $it->first_responder_count = $jadiFirstResponder;
+                
+                // Logika Label
                 if ($slaPct >= 90) {
-                    $it->status_class = 'success';
-                    $it->status_label = 'Sangat Cepat';
+                    $it->status_class = 'success'; $it->status_label = 'Sangat Cepat';
                 } elseif ($slaPct >= 75) {
-                    $it->status_class = 'primary';
-                    $it->status_label = 'Cepat';
+                    $it->status_class = 'primary'; $it->status_label = 'Cepat';
                 } elseif ($slaPct >= 50) {
-                    $it->status_class = 'warning';
-                    $it->status_label = 'Lambat';
+                    $it->status_class = 'warning'; $it->status_label = 'Lambat';
                 } else {
-                    $it->status_class = 'danger';
-                    $it->status_label = 'Sangat Lambat';
+                    $it->status_class = 'danger'; $it->status_label = 'Sangat Lambat';
                 }
                 
-                // Khusus untuk tabel Kinerja On-Duty
                 $it->total_ditangani = $tiketSelesai;
                 $it->sedang_ditangani = $tiketMenggantung;
 
