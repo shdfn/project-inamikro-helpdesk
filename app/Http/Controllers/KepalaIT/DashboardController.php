@@ -67,48 +67,60 @@ class DashboardController extends Controller
 
         // ═══ Performa per IT Support (bulan ini) ═══
         $itSupports = User::where('role', 'it_support')
-            ->get()
-            ->map(function ($it) use ($month, $year) {
-                $totalTiket = Ticket::where('it_support_id', $it->id)
-                    ->whereMonth('created_at', $month)
-                    ->whereYear('created_at', $year)
-                    ->whereNotNull('first_response_at')
-                    ->count();
+        ->get()
+        ->map(function ($it) use ($month, $year) {
+            // Total tiket yang pernah direspons IT ini
+            $totalTiket = Ticket::where('it_support_id', $it->id)
+                ->whereMonth('created_at', $month)
+                ->whereYear('created_at', $year)
+                ->whereNotNull('first_response_at')
+                ->count();
 
-                $tiketSelesai = Ticket::where('it_support_id', $it->id)
-                    ->whereMonth('created_at', $month)
-                    ->whereYear('created_at', $year)
-                    ->whereIn('status', ['Selesai', 'Ditutup'])
-                    ->count();
+            // Tiket selesai/ditutup
+            $tiketSelesai = Ticket::where('it_support_id', $it->id)
+                ->whereMonth('created_at', $month)
+                ->whereYear('created_at', $year)
+                ->whereIn('status', ['Selesai', 'Ditutup'])
+                ->count();
 
-                $slaOk = Ticket::where('it_support_id', $it->id)
-                    ->whereMonth('created_at', $month)
-                    ->whereYear('created_at', $year)
-                    ->whereNotNull('first_response_at')
-                    ->whereRaw('TIMESTAMPDIFF(MINUTE, created_at, first_response_at) <= 30')
-                    ->count();
+            // ✅ BARU: Tiket menggantung (masih aktif, belum closed)
+            $tiketMenggantung = Ticket::where('it_support_id', $it->id)
+                ->whereMonth('created_at', $month)
+                ->whereYear('created_at', $year)
+                ->whereIn('status', ['Baru', 'Ditangani IT', 'Dibalas IT', 'Dibalas Mentor'])
+                ->count();
 
-                $avg = Ticket::where('it_support_id', $it->id)
-                    ->whereMonth('created_at', $month)
-                    ->whereYear('created_at', $year)
-                    ->whereNotNull('first_response_at')
-                    ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_response_at)) as m')
-                    ->value('m') ?? 0;
+            // Tiket yang memenuhi SLA (respon ≤ 30 menit)
+            $slaOk = Ticket::where('it_support_id', $it->id)
+                ->whereMonth('created_at', $month)
+                ->whereYear('created_at', $year)
+                ->whereNotNull('first_response_at')
+                ->whereRaw('TIMESTAMPDIFF(MINUTE, created_at, first_response_at) <= 30')
+                ->count();
 
-                $it->initial = strtoupper(substr($it->name, 0, 2));
-                $it->total_tiket = $totalTiket;
-                $it->tiket_selesai = $tiketSelesai;
-                $it->sla_percentage = $totalTiket > 0 ? round(($slaOk / $totalTiket) * 100, 2) : 0;
-                $it->avg_response = $this->formatDuration($avg);
-                $it->status = $it->sla_percentage >= 90
-                    ? 'Excellent'
-                    : ($it->sla_percentage >= 75 ? 'Baik' : 'Perlu Perbaikan');
-                $it->status_class = $it->sla_percentage >= 90
-                    ? 'success'
-                    : ($it->sla_percentage >= 75 ? 'warning' : 'danger');
+            // Rata-rata response time
+            $avg = Ticket::where('it_support_id', $it->id)
+                ->whereMonth('created_at', $month)
+                ->whereYear('created_at', $year)
+                ->whereNotNull('first_response_at')
+                ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_response_at)) as m')
+                ->value('m') ?? 0;
 
-                return $it;
-            });
+            $it->initial = strtoupper(substr($it->name, 0, 2));
+            $it->total_tiket = $totalTiket;
+            $it->tiket_selesai = $tiketSelesai;
+            $it->tiket_menggantung = $tiketMenggantung; // ✅ BARU
+            $it->sla_percentage = $totalTiket > 0 ? round(($slaOk / $totalTiket) * 100, 2) : 0;
+            $it->avg_response = $this->formatDuration($avg);
+            $it->status = $it->sla_percentage >= 90
+                ? 'Excellent'
+                : ($it->sla_percentage >= 75 ? 'Baik' : 'Perlu Perbaikan');
+            $it->status_class = $it->sla_percentage >= 90
+                ? 'success'
+                : ($it->sla_percentage >= 75 ? 'warning' : 'danger');
+
+            return $it;
+        });
 
         // ═══ Kategori Populer ═══
         $kategoriPopuler = DB::table('tickets')

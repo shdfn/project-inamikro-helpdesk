@@ -38,17 +38,77 @@ class MonitoringController extends Controller
 
         $persenSLA = $totalRespon > 0 ? round(($dalamSLA / $totalRespon) * 100, 2) : 0;
 
-        // ═══ Teknisi On-Duty ═══
+        // ═══ Teknisi On-Duty & Metrik Per IT ═══
         $onDuty = User::where('role', 'it_support')
-            ->withCount([
-                'ticketsAsSupport as sedang_ditangani' => function ($q) {
-                    $q->whereIn('status', ['Ditangani IT', 'Dibalas IT', 'Dibalas Mentor']);
-                },
-                'ticketsAsSupport as total_ditangani' => function ($q) {
-                    $q->whereIn('status', ['Selesai', 'Ditutup']);
-                },
-            ])
-            ->get();
+            ->get()
+            ->map(function ($it) use ($month, $year) {
+                // 1. Hitung Total Tiket (yang direspons)
+                $totalTiket = Ticket::where('it_support_id', $it->id)
+                    ->whereMonth('created_at', $month)
+                    ->whereYear('created_at', $year)
+                    ->whereNotNull('first_response_at')
+                    ->count();
+
+                // 2. Hitung Tiket Selesai
+                $tiketSelesai = Ticket::where('it_support_id', $it->id)
+                    ->whereMonth('created_at', $month)
+                    ->whereYear('created_at', $year)
+                    ->whereIn('status', ['Selesai', 'Ditutup'])
+                    ->count();
+
+                // 3. Hitung Tiket Menggantung (Masih aktif)
+                $tiketMenggantung = Ticket::where('it_support_id', $it->id)
+                    ->whereMonth('created_at', $month)
+                    ->whereYear('created_at', $year)
+                    ->whereIn('status', ['Baru', 'Ditangani IT', 'Dibalas IT', 'Dibalas Mentor'])
+                    ->count();
+
+                // 4. Hitung SLA % (Respon <= 30 menit)
+                $slaOk = Ticket::where('it_support_id', $it->id)
+                    ->whereMonth('created_at', $month)
+                    ->whereYear('created_at', $year)
+                    ->whereNotNull('first_response_at')
+                    ->whereRaw('TIMESTAMPDIFF(MINUTE, created_at, first_response_at) <= 30')
+                    ->count();
+                
+                $slaPct = $totalTiket > 0 ? round(($slaOk / $totalTiket) * 100, 2) : 0;
+
+                // 5. Hitung Avg Response
+                $avgMinutes = Ticket::where('it_support_id', $it->id)
+                    ->whereMonth('created_at', $month)
+                    ->whereYear('created_at', $year)
+                    ->whereNotNull('first_response_at')
+                    ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_response_at)) as m')
+                    ->value('m') ?? 0;
+
+                // Data tambahan untuk tabel & chart
+                $it->total_tiket = $totalTiket;
+                $it->tiket_selesai = $tiketSelesai;
+                $it->tiket_menggantung = $tiketMenggantung;
+                $it->sla_percentage = $slaPct;
+                $it->avg_response = $this->formatDuration($avgMinutes);
+                
+                // ✅ Logika Label & Warna Baru (Sangat Cepat, Cepat, Lambat, Sangat Lambat)
+                if ($slaPct >= 90) {
+                    $it->status_class = 'success';
+                    $it->status_label = 'Sangat Cepat';
+                } elseif ($slaPct >= 75) {
+                    $it->status_class = 'primary';
+                    $it->status_label = 'Cepat';
+                } elseif ($slaPct >= 50) {
+                    $it->status_class = 'warning';
+                    $it->status_label = 'Lambat';
+                } else {
+                    $it->status_class = 'danger';
+                    $it->status_label = 'Sangat Lambat';
+                }
+                
+                // Khusus untuk tabel Kinerja On-Duty
+                $it->total_ditangani = $tiketSelesai;
+                $it->sedang_ditangani = $tiketMenggantung;
+
+                return $it;
+            });
 
         // ═══ Kategori Teratas ═══
         $kategoriTeratas = DB::table('tickets')

@@ -245,10 +245,22 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
 
-        // ═══ Chart 1: Performa SLA IT Support ═══
+        // ═══ Fungsi untuk mendapatkan warna tema saat ini ═══
+        function getThemeColors() {
+            const styles = getComputedStyle(document.documentElement);
+            return {
+                grid: styles.getPropertyValue('--bs-border-color').trim() || 'rgba(0,0,0,0.1)',
+                text: styles.getPropertyValue('--bs-secondary-color').trim() || '#6c757d',
+                bg: styles.getPropertyValue('--bs-body-bg').trim() || '#fff'
+            };
+        }
+
+        // ═══ Inisialisasi Chart 1: Performa SLA ═══
         const ctxPerformaIT = document.getElementById('chartPerformaIT');
+        let chartPerformaIT = null;
         if (ctxPerformaIT) {
-            new Chart(ctxPerformaIT, {
+            let colors = getThemeColors();
+            chartPerformaIT = new Chart(ctxPerformaIT, {
                 type: 'bar',
                 data: {
                     labels: [
@@ -273,34 +285,22 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // Agar mengikuti tinggi wrapper
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    return 'SLA: ' + context.parsed.y + '%';
-                                }
-                            }
-                        }
-                    },
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            ticks: {
-                                callback: function (value) { return value + '%'; }
-                            }
-                        }
+                        x: { grid: { color: colors.grid }, ticks: { color: colors.text } },
+                        y: { beginAtZero: true, max: 100, grid: { color: colors.grid }, ticks: { color: colors.text, callback: v => v + '%' } }
                     }
                 }
             });
         }
 
-        // ═══ Chart 2: Kategori Kendala Teratas ═══
+        // ═══ Inisialisasi Chart 2: Kategori ═══
         const ctxKategori = document.getElementById('chartKategori');
+        let chartKategori = null;
         if (ctxKategori) {
-            new Chart(ctxKategori, {
+            let colors = getThemeColors();
+            chartKategori = new Chart(ctxKategori, {
                 type: 'bar',
                 data: {
                     labels: [
@@ -322,20 +322,21 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
-                        y: { beginAtZero: true }
+                        x: { grid: { color: colors.grid }, ticks: { color: colors.text } },
+                        y: { beginAtZero: true, grid: { color: colors.grid }, ticks: { color: colors.text } }
                     }
                 }
             });
         }
 
-        // ═══ Chart 3: Distribusi Status ═══
+        // ═══ Inisialisasi Chart 3: Distribusi Status ═══
         const ctxStatus = document.getElementById('chartStatus');
+        let chartStatus = null;
         if (ctxStatus) {
-            new Chart(ctxStatus, {
+            let colors = getThemeColors();
+            chartStatus = new Chart(ctxStatus, {
                 type: 'doughnut',
                 data: {
                     labels: ['Baru', 'Ditangani IT', 'Dibalas IT', 'Dibalas Mentor', 'Selesai', 'Ditutup'],
@@ -350,28 +351,58 @@
                         ],
                         backgroundColor: ['#dc3545', '#ffc107', '#0d6efd', '#0dcaf0', '#198754', '#6c757d'],
                         borderWidth: 2,
-                        borderColor: '#fff'
+                        borderColor: colors.bg // Warna border mengikuti background body/card
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     cutout: '65%',
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(2) : 0;
-                                    return context.label + ': ' + context.parsed + ' tiket (' + percentage + '%)';
-                                }
-                            }
-                        }
-                    }
+                    plugins: { legend: { display: false } }
                 }
             });
         }
+
+        // ═══ EVENT LISTENER: Deteksi Klik Ganti Mode ═══
+        // Kita pantau perubahan atribut pada tag <html> atau <body> (biasanya data-bs-theme)
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'data-bs-theme' || mutation.attributeName === 'class') {
+                    // Beri sedikit jeda agar CSS Bootstrap selesai berubah
+                    setTimeout(() => {
+                        let newColors = getThemeColors();
+
+                        // Update Chart 1
+                        if (chartPerformaIT) {
+                            chartPerformaIT.options.scales.x.grid.color = newColors.grid;
+                            chartPerformaIT.options.scales.x.ticks.color = newColors.text;
+                            chartPerformaIT.options.scales.y.grid.color = newColors.grid;
+                            chartPerformaIT.options.scales.y.ticks.color = newColors.text;
+                            chartPerformaIT.update();
+                        }
+
+                        // Update Chart 2
+                        if (chartKategori) {
+                            chartKategori.options.scales.x.grid.color = newColors.grid;
+                            chartKategori.options.scales.x.ticks.color = newColors.text;
+                            chartKategori.options.scales.y.grid.color = newColors.grid;
+                            chartKategori.options.scales.y.ticks.color = newColors.text;
+                            chartKategori.update();
+                        }
+
+                        // Update Chart 3 (Donat)
+                        if (chartStatus) {
+                            chartStatus.data.datasets[0].borderColor = newColors.bg;
+                            chartStatus.update();
+                        }
+                    }, 100);
+                }
+            });
+        });
+
+        // Mulai pantau perubahan tema pada tag <html> dan <body>
+        observer.observe(document.documentElement, { attributes: true });
+        observer.observe(document.body, { attributes: true });
     });
 </script>
 
