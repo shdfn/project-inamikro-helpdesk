@@ -104,16 +104,10 @@
                         </td>
                         <td>{{ $ticket->created_at->format('d M Y H:i') }}</td>
                         <td>
-                            @if($ticket->status === 'Baru')
-                                <form action="{{ route('it.tickets.assign', $ticket->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm btn-inamikro">Tangani</button>
-                                </form>
-                            @else
-                                <a href="{{ route('it.tickets.show', $ticket->id) }}" class="btn btn-sm btn-outline-dark">
-                                    Detail
-                                </a>
-                            @endif
+                            {{-- Tombol Tangani dihilangkan, diganti tombol Detail --}}
+                            <a href="{{ route('it.tickets.show', $ticket->id) }}" class="btn btn-sm btn-inamikro">
+                                Detail
+                            </a>
                         </td>
                     </tr>
                 @empty

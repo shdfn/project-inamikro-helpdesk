@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INAmikro - @yield('judul', 'Helpdesk')</title>
 
+    {{-- ⭐ SCRIPT ANTI-FLICKER: Diletakkan paling atas agar tema langsung diterapkan --}}
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-bs-theme', theme);
+        })();
+    </script>
+
     {{-- Bootstrap CSS via CDN --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     {{-- Bootstrap Icons via CDN --}}
@@ -345,29 +353,51 @@
         /* WARNA & UKURAN LOGO INAMIKRO DINAMIS        */
         /* ═══════════════════════════════════════════ */
         .brand-text {
-            font-size: 1.90rem; /* Ukuran proporsional dengan logo 35px */
+            font-size: 1.90rem;
             font-family: 'Segoe UI', sans-serif;
             letter-spacing: -0.5px;
         }
 
-        /* Default (Light Mode): INA berwarna Hitam */
         .text-ina {
             color: #000000;
             transition: color 0.3s ease;
         }
 
-        /* Dark Mode: INA berwarna Putih */
         [data-bs-theme="dark"] .text-ina {
             color: #ffffff !important;
         }
 
-        /* Profil User Background */
         .sidebar-profile-box {
             background-color: #f8f9fa;
             transition: background-color 0.3s;
         }
         [data-bs-theme="dark"] .sidebar-profile-box {
             background-color: #2c2c2c !important;
+        }
+
+        /* ═══════════════════════════════════════════ */
+        /* CUSTOM CHAT BUBBLE DI DARK MODE             */
+        /* ═══════════════════════════════════════════ */
+        .chat-bubble-right {
+            background-color: #f4c7c9;
+            color: #000;
+        }
+        .chat-bubble-left {
+            background-color: #f8f9fa;
+            color: #000;
+        }
+
+        [data-bs-theme="dark"] .chat-bubble-right {
+            background-color: #8b1e23;
+            color: #ffffff;
+        }
+        [data-bs-theme="dark"] .chat-bubble-left {
+            background-color: #2c2c2c;
+            color: #ffffff;
+        }
+        [data-bs-theme="dark"] .chat-bubble-right a,
+        [data-bs-theme="dark"] .chat-bubble-left a {
+            color: #90caf9 !important;
         }
     </style>
 </head>
@@ -444,26 +474,20 @@
         const themeIcon = document.getElementById('themeIcon');
 
         if (themeToggle) {
-            // 1. Cek tema yang tersimpan di localStorage
-            const currentTheme = localStorage.getItem('theme') || 'light';
-            htmlElement.setAttribute('data-bs-theme', currentTheme);
+            // Cek tema saat ini dari atribut yang sudah di-set di head
+            const currentTheme = htmlElement.getAttribute('data-bs-theme') || 'light';
             updateIcon(currentTheme);
 
-            // 2. Fungsi klik tombol toggle
+            // Fungsi klik tombol toggle
             themeToggle.addEventListener('click', function () {
                 const newTheme = htmlElement.getAttribute('data-bs-theme') === 'light' ? 'dark' : 'light';
                 
-                // Ganti atribut di <html>
                 htmlElement.setAttribute('data-bs-theme', newTheme);
-                
-                // Simpan ke localStorage
                 localStorage.setItem('theme', newTheme);
-                
-                // Ganti ikon
                 updateIcon(newTheme);
             });
 
-            // 3. Fungsi untuk mengganti ikon (Matahari/Bulan)
+            // Fungsi untuk mengganti ikon (Matahari/Bulan)
             function updateIcon(theme) {
                 if (theme === 'dark') {
                     themeIcon.classList.remove('bi-moon-fill');

@@ -73,7 +73,6 @@ Route::middleware('auth')->prefix('it-support')->name('it.')->group(function () 
     Route::get('tickets/export', [ITTicket::class, 'export'])->name('tickets.export');
 
     Route::get('tickets/{id}', [ITTicket::class, 'show'])->name('tickets.show');
-    Route::post('tickets/{id}/assign', [ITTicket::class, 'assign'])->name('tickets.assign');
     Route::post('tickets/{id}/message', [ITTicket::class, 'sendMessage'])->name('tickets.message');
     Route::post('tickets/{id}/resolve', [ITTicket::class, 'markResolved'])->name('tickets.resolve');
 
@@ -106,4 +105,13 @@ Route::middleware('auth')->prefix('kepala-it')->name('kepala.')->group(function 
     Route::get('users/{id}/edit', [KepalaUser::class, 'edit'])->name('users.edit');
     Route::put('users/{id}', [KepalaUser::class, 'update'])->name('users.update');
     Route::delete('users/{id}', [KepalaUser::class, 'destroy'])->name('users.destroy');
+
+    // ⭐ Route untuk Persetujuan Perubahan Profil
+    Route::post('users/profile/approve/{id}', [KepalaUser::class, 'approveProfile'])->name('users.approve');
+    Route::post('users/profile/reject/{id}', [KepalaUser::class, 'rejectProfile'])->name('users.reject');
+
+    // Kepala IT bisa merespon chat & menandai selesai
+    Route::post('tickets/{id}/message', [ITTicket::class, 'sendMessage'])->name('tickets.message');
+    Route::post('tickets/{id}/resolve', [ITTicket::class, 'markResolved'])->name('tickets.resolve');
+
 });

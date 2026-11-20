@@ -105,7 +105,7 @@
         </div>
     </div>
     
-    <!-- KOLOM KANAN: TIM IT SUPPORT -->
+    <!-- KOLOM KANAN: TIM IT SUPPORT & KEPALA IT -->
     <div class="col-md-4 mb-4">
         <div class="card card-custom p-4 h-100">
             <h5 class="fw-bold mb-3 text-center">
@@ -113,8 +113,32 @@
             </h5>
             <p class="text-muted small text-center mb-4">Hubungi teknisi jika darurat (di luar sistem tiket)</p>
             
+            @php
+                // Pisahkan Kepala IT dan IT Support
+                $kepalaIT = $itSupports->filter(fn($u) => $u->role === 'kepala_it');
+                $itSupport = $itSupports->filter(fn($u) => $u->role === 'it_support');
+            @endphp
+
             <div class="d-flex flex-column gap-2">
-                @forelse($itSupports as $it)
+                {{-- 👑 KEPALA IT --}}
+                @foreach($kepalaIT as $it)
+                    <div class="d-flex align-items-center border rounded p-2">
+                        <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+                            style="width: 36px; height: 36px; font-size: 0.75rem; font-weight: 600;">
+                            {{ strtoupper(substr($it->name, 0, 2)) }}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold" style="font-size: 0.85rem;">{{ $it->name }}</div>
+                            <small class="text-muted" style="font-size: 0.7rem;">Kepala IT</small>
+                        </div>
+                        <div class="text-success" title="Online" style="font-size: 0.6rem;">
+                            <i class="bi bi-circle-fill"></i>
+                        </div>
+                    </div>
+                @endforeach
+
+                {{-- 👨‍💻 IT SUPPORT --}}
+                @foreach($itSupport as $it)
                     <div class="d-flex align-items-center border rounded p-2">
                         <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center me-3 flex-shrink-0"
                             style="width: 36px; height: 36px; font-size: 0.75rem; font-weight: 600;">
@@ -128,11 +152,13 @@
                             <i class="bi bi-circle-fill"></i>
                         </div>
                     </div>
-                @empty
+                @endforeach
+
+                @if($itSupports->isEmpty())
                     <div class="text-center text-muted small py-3">
-                        Belum ada data IT Support.
+                        Belum ada data Tim IT.
                     </div>
-                @endforelse
+                @endif
             </div>
             
             <div class="alert alert-warning mt-3 mb-0 text-start" style="font-size: 0.75rem;">

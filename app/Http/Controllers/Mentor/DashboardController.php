@@ -25,7 +25,7 @@ class DashboardController extends Controller
             ->get();
 
         // ⭐ Tambahkan baris ini untuk mengambil data IT Support
-        $itSupports = \App\Models\User::where('role', 'it_support')->get();
+        $itSupports = \App\Models\User::whereIn('role', ['it_support', 'kepala_it'])->get();
 
         // ⭐ Pastikan 'itSupports' masuk ke dalam compact
         return view('mentor.dashboard', compact('stats', 'recentTickets', 'itSupports'));

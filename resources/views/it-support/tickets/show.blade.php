@@ -95,13 +95,22 @@
 
                         @if($ticket->attachment)
                             <div class="mt-2 pt-2 border-top border-danger">
-                                <a href="{{ asset('storage/' . $ticket->attachment) }}" download
-                                class="text-dark small text-decoration-none">
-                                    <i class="bi bi-paperclip"></i> {{ basename($ticket->attachment) }}
-                                </a>
+                                @if(in_array(strtolower(pathinfo($ticket->attachment, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif', 'webp']))
+                                    <a href="{{ asset('storage/' . $ticket->attachment) }}" target="_blank" title="Klik untuk memperbesar">
+                                        <img src="{{ asset('storage/' . $ticket->attachment) }}" 
+                                            alt="Lampiran Kendala" 
+                                            class="img-fluid rounded mt-1" 
+                                            style="max-height: 200px; object-fit: contain; border: 1px solid #ddd; padding: 5px;">
+                                    </a>
+                                @else
+                                    <a href="{{ asset('storage/' . $ticket->attachment) }}" download
+                                    class="text-dark small text-decoration-none">
+                                        <i class="bi bi-paperclip"></i> {{ basename($ticket->attachment) }}
+                                    </a>
+                                @endif
                             </div>
                         @endif
-                    </div>
+                                            </div>
                 </div>
 
                 {{-- PEMISAH --}}
@@ -120,20 +129,29 @@
                     @if($msg->user_id === auth()->id())
                         {{-- Pesan dari diri sendiri (IT Support) — kanan --}}
                         <div class="d-flex mb-3 justify-content-end">
-                            <div class="p-3 rounded-3" style="max-width: 80%; background-color: #f4c7c9;">
+                            <div class="p-3 rounded-3 chat-bubble-right" style="max-width: 80%;">
                                 <small class="d-block text-end mb-1 fw-bold">
                                     <i class="bi bi-person-badge"></i> (Anda) {{ $msg->user->name }}
                                 </small>
-                                <small class="d-block text-end mb-2 text-muted" style="font-size: 0.7rem;">
+                                <small class="d-block text-end mb-2 opacity-75" style="font-size: 0.7rem;">
                                     {{ $msg->created_at->format('d M Y H:i') }}
                                 </small>
-                                {{ $msg->message }}
+                                
+                                <div class="text-end">{{ $msg->message }}</div>
+                                
                                 @if($msg->attachment)
                                     <div class="mt-2 pt-2 border-top">
-                                        <a href="{{ asset('storage/' . $msg->attachment) }}" download
-                                           class="text-dark small text-decoration-none">
-                                            <i class="bi bi-paperclip"></i> {{ basename($msg->attachment) }}
-                                        </a>
+                                        @if(Str::endsWith($msg->attachment, ['.jpg', '.jpeg', '.png', '.gif', '.webp']))
+                                            <div class="text-end mt-1">
+                                                <a href="{{ asset('storage/' . $msg->attachment) }}" target="_blank">
+                                                    <img src="{{ asset('storage/' . $msg->attachment) }}" alt="Lampiran" class="img-fluid rounded" style="max-height: 200px; object-fit: cover;">
+                                                </a>
+                                            </div>
+                                        @else
+                                            <a href="{{ asset('storage/' . $msg->attachment) }}" download class="text-white small text-decoration-none">
+                                                <i class="bi bi-paperclip"></i> {{ basename($msg->attachment) }}
+                                            </a>
+                                        @endif
                                     </div>
                                 @endif
                             </div>
@@ -153,20 +171,33 @@
                                     <i class="bi bi-person-fill"></i>
                                 </div>
                             </div>
-                            <div class="p-3 rounded-3 bg-light" style="max-width: 80%;">
+                            <div class="p-3 rounded-3 chat-bubble-left" style="max-width: 80%;">
                                 <small class="d-block mb-1 fw-bold">
-                                    <i class="bi bi-person"></i> {{ $msg->user->name ?? 'User' }} (Mentor)
-                                </small>
-                                <small class="d-block mb-2 text-muted" style="font-size: 0.7rem;">
-                                    {{ $msg->created_at->format('d M Y H:i') }}
+                                    <i class="bi bi-person"></i> {{ $msg->user->name ?? 'User' }} 
+                                    @if(($msg->user->role ?? '') === 'mentor')
+                                        (Mentor)
+                                    @elseif(($msg->user->role ?? '') === 'kepala_it')
+                                        (Kepala IT)
+                                    @elseif(($msg->user->role ?? '') === 'it_support')
+                                        (IT Support)
+                                    @endif
                                 </small>
                                 {{ $msg->message }}
+                                
                                 @if($msg->attachment)
+                                    @php
+                                        $ext = pathinfo($msg->attachment, PATHINFO_EXTENSION);
+                                        $isImage = in_array(strtolower($ext), ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                                    @endphp
+                                    
                                     <div class="mt-2 pt-2 border-top">
-                                        <a href="{{ asset('storage/' . $msg->attachment) }}" download
-                                           class="text-dark small text-decoration-none">
-                                            <i class="bi bi-paperclip"></i> {{ basename($msg->attachment) }}
-                                        </a>
+                                        @if($isImage)
+                                            <img src="{{ asset('storage/' . $msg->attachment) }}" alt="Lampiran" class="img-fluid rounded" style="max-height: 200px; cursor: pointer;" onclick="window.open(this.src)">
+                                        @else
+                                            <a href="{{ asset('storage/' . $msg->attachment) }}" download class="text-dark small text-decoration-none">
+                                                <i class="bi bi-paperclip"></i> {{ basename($msg->attachment) }}
+                                            </a>
+                                        @endif
                                     </div>
                                 @endif
                             </div>
@@ -181,11 +212,10 @@
 
             </div> {{-- END AREA CHAT --}}
 
-            {{-- FORM KIRIM PESAN (STICKY BOTTOM) --}}
-            @if($ticket->it_support_id === auth()->id() && $ticket->status !== 'Ditutup')
+            {{-- FORM KIRIM PESAN (Bisa diakses semua IT Support/Kepala IT) --}}
+            @if($ticket->status !== 'Ditutup')
                 <div class="mt-3 pt-3 border-top">
-                    <form action="{{ route('it.tickets.message', $ticket->id) }}" method="POST"
-                          enctype="multipart/form-data">
+                    <form action="{{ route('it.tickets.message', $ticket->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="input-group">
                             <label for="fileInput" class="input-group-text bg-white border-end-0" style="cursor: pointer;">
@@ -201,39 +231,7 @@
                         <small id="fileName" class="text-muted d-block mt-1"></small>
                     </form>
                 </div>
-
-            {{-- Info kalau ditangani IT lain --}}
-            @elseif($ticket->it_support_id && $ticket->it_support_id !== auth()->id())
-                <div class="mt-3 pt-3 border-top">
-                    <div class="alert alert-warning mb-0">
-                        <i class="bi bi-info-circle"></i>
-                        Tiket ini sedang ditangani oleh <strong>{{ $ticket->itSupport->name ?? 'IT Support lain' }}</strong>.
-                        <form action="{{ route('it.tickets.assign', $ticket->id) }}" method="POST" class="mt-2"
-                              onsubmit="return confirm('Ambil alih tiket ini dari {{ $ticket->itSupport->name ?? 'IT lain' }}?')">
-                            @csrf
-                            <button type="submit" class="btn btn-sm btn-warning">
-                                <i class="bi bi-arrow-left-right"></i> Ambil Alih
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-            {{-- Tombol Tangani kalau tiket masih Baru --}}
-            @elseif($ticket->status === 'Baru')
-                <div class="mt-3 pt-3 border-top">
-                    <div class="alert alert-info mb-0">
-                        <p class="mb-2 small">Tiket ini belum ditangani siapa pun. Klik tombol untuk mulai menangani.</p>
-                        <form action="{{ route('it.tickets.assign', $ticket->id) }}" method="POST">
-                            @csrf
-                            <button type="submit" class="btn btn-inamikro">
-                                <i class="bi bi-hand-index"></i> Tangani Tiket Ini
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-            {{-- Kalau status Ditutup --}}
-            @elseif($ticket->status === 'Ditutup')
+            @else
                 <div class="mt-3 pt-3 border-top">
                     <div class="alert alert-secondary mb-0 text-center">
                         <i class="bi bi-lock-fill"></i>
@@ -249,6 +247,9 @@
     {{-- KOLOM KANAN --}}
     {{-- ═══════════════════════════════════════════ --}}
     <div class="col-md-5">
+
+        {{-- Riwayat Penanganan --}}
+        @include('tickets.handler-history')
 
         {{-- TIMELINE SLA --}}
         <div class="card card-custom p-4 mb-4">
@@ -304,8 +305,8 @@
             </div>
         </div>
 
-        {{-- KONFIRMASI PENYELESAIAN --}}
-        @if($ticket->it_support_id === auth()->id() && in_array($ticket->status, ['Ditangani IT', 'Dibalas IT', 'Dibalas Mentor']))
+        {{-- KONFIRMASI PENYELESAIAN (Bisa diakses semua IT Support/Kepala IT) --}}
+        @if(in_array($ticket->status, ['Ditangani IT', 'Dibalas IT', 'Dibalas Mentor']))
             <div class="card card-custom p-4 text-center mb-4">
                 <h5 class="fw-bold">Konfirmasi Penyelesaian</h5>
                 <p class="text-muted small mb-3">

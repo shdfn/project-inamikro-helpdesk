@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\Validator;
 
 class TicketController extends Controller
 {
-    // ============ TIKET MASUK ============
     public function incoming(Request $request)
     {
         Ticket::autoCloseExpiredTickets();
@@ -20,7 +19,6 @@ class TicketController extends Controller
         $query = Ticket::with(['mentor', 'itSupport', 'category', 'messages.user'])
             ->whereIn('status', ['Baru', 'Ditangani IT', 'Dibalas IT', 'Dibalas Mentor']);
 
-        // Search
         if ($request->filled('q')) {
             $search = $request->q;
             $query->where(function ($q) use ($search) {
@@ -29,21 +27,9 @@ class TicketController extends Controller
                   ->orWhere('description', 'like', "%{$search}%");
             });
         }
-
-        // Filter kategori
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
-
-        // Filter prioritas
-        if ($request->filled('priority')) {
-            $query->where('priority', $request->priority);
-        }
-
-        // Filter status
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
+        if ($request->filled('category_id')) $query->where('category_id', $request->category_id);
+        if ($request->filled('priority')) $query->where('priority', $request->priority);
+        if ($request->filled('status')) $query->where('status', $request->status);
 
         $tickets = $query
             ->orderByRaw("FIELD(priority, 'Tinggi', 'Sedang', 'Rendah')")
@@ -51,18 +37,15 @@ class TicketController extends Controller
             ->get();
 
         $categories = Category::all();
-
         return view('it-support.tickets.incoming', compact('tickets', 'categories'));
     }
 
-    // ============ TIKET DITANGANI SAYA ============
     public function myTickets(Request $request)
     {
         Ticket::autoCloseExpiredTickets();
 
-        $query = Ticket::with(['mentor', 'itSupport', 'category'])
-            ->where('it_support_id', auth()->id())
-            ->whereIn('status', ['Ditangani IT', 'Dibalas IT', 'Dibalas Mentor']);
+        $query = Ticket::with(['mentor', 'itSupport', 'category', 'messages.user'])
+            ->whereIn('status', ['Baru', 'Ditangani IT', 'Dibalas IT', 'Dibalas Mentor']);
 
         if ($request->filled('q')) {
             $search = $request->q;
@@ -72,23 +55,16 @@ class TicketController extends Controller
             });
         }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
         $tickets = $query->orderBy('updated_at', 'desc')->get();
         $categories = Category::all();
-
         return view('it-support.tickets.my', compact('tickets', 'categories'));
     }
 
-    // ============ RIWAYAT & ARSIP ============
     public function history(Request $request)
     {
         Ticket::autoCloseExpiredTickets();
 
-        $query = Ticket::with(['mentor', 'category'])
-            ->where('it_support_id', auth()->id())
+        $query = Ticket::with(['mentor', 'category', 'messages.user'])
             ->whereIn('status', ['Selesai', 'Ditutup']);
 
         if ($request->filled('q')) {
@@ -98,29 +74,16 @@ class TicketController extends Controller
                   ->orWhere('title', 'like', "%{$search}%");
             });
         }
-
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
-
-        if ($request->filled('priority')) {
-            $query->where('priority', $request->priority);
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
+        if ($request->filled('category_id')) $query->where('category_id', $request->category_id);
+        if ($request->filled('priority')) $query->where('priority', $request->priority);
+        if ($request->filled('date_from')) $query->whereDate('created_at', '>=', $request->date_from);
+        if ($request->filled('date_to')) $query->whereDate('created_at', '<=', $request->date_to);
 
         $tickets = $query->orderBy('updated_at', 'desc')->get();
         $categories = Category::all();
-
         return view('it-support.tickets.history', compact('tickets', 'categories'));
     }
 
-    // ============ DETAIL TIKET ============
     public function show($id)
     {
         Ticket::autoCloseExpiredTickets();
@@ -182,16 +145,12 @@ class TicketController extends Controller
             ->with('success', 'Tiket berhasil diambil.');
     }
 
-    // ============ KIRIM PESAN DISKUSI ============
+    // ============ KIRIM PESAN DISKUSI (BEBAS SIAPA SAJA) ============
     public function sendMessage(Request $request, $id)
     {
         Ticket::autoCloseExpiredTickets();
 
         $ticket = Ticket::findOrFail($id);
-
-        if ($ticket->it_support_id !== auth()->id()) {
-            return back()->with('error', 'Anda belum mengambil tiket ini.');
-        }
 
         if ($ticket->status === 'Ditutup') {
             return back()->with('error', 'Tiket sudah ditutup.');
@@ -202,9 +161,7 @@ class TicketController extends Controller
             'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf,log,txt|max:10240',
         ]);
 
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
+        if ($validator->fails()) return back()->withErrors($validator)->withInput();
 
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {
@@ -218,13 +175,19 @@ class TicketController extends Controller
             'attachment' => $attachmentPath,
         ]);
 
-        // Update status ke "Dibalas IT" + set first_response_at
-        $ticket->update([
-            'status' => 'Dibalas IT',
+        // Otomatis set IT Support yang membalas pertama kali jika belum ada
+        $updateData = [
+            'status' => $ticket->first_response_at ? 'Dibalas IT' : 'Ditangani IT',
             'first_response_at' => $ticket->first_response_at ?? now(),
-        ]);
+        ];
 
-        // Notifikasi ke Mentor
+        // Jika yang membalas adalah user dengan role it_support DAN belum ada PIC
+        if (!$ticket->it_support_id && auth()->user()->role === 'it_support') {
+            $updateData['it_support_id'] = auth()->id();
+        }
+
+        $ticket->update($updateData);
+
         NotificationHelper::send(
             $ticket->mentor_id,
             $ticket->id,
@@ -243,10 +206,6 @@ class TicketController extends Controller
         Ticket::autoCloseExpiredTickets();
 
         $ticket = Ticket::findOrFail($id);
-
-        if ($ticket->it_support_id !== auth()->id()) {
-            return back()->with('error', 'Anda tidak berhak menandai tiket ini selesai.');
-        }
 
         if (!in_array($ticket->status, ['Ditangani IT', 'Dibalas IT', 'Dibalas Mentor'])) {
             return back()->with('error', 'Tiket tidak bisa ditandai selesai pada status ini.');
@@ -271,9 +230,9 @@ class TicketController extends Controller
             'status' => 'Selesai',
             'resolved_at' => now(),
             'resolution_note' => trim($request->resolution_note),
+            'it_support_id' => $ticket->it_support_id ?? auth()->id(),
         ]);
 
-        // Notifikasi ke Mentor
         NotificationHelper::send(
             $ticket->mentor_id,
             $ticket->id,
@@ -283,19 +242,16 @@ class TicketController extends Controller
             'Tiket #' . $ticket->ticket_number . ' telah selesai. Menunggu konfirmasi Anda.'
         );
 
-        return back()->with('success', 'Tiket ditandai selesai. Menunggu konfirmasi Mentor.');
+        return back()->with('success', 'Tiket ditandai selesai.');
     }
 
-    // ============ EXPORT CSV ============
     public function export(Request $request)
     {
         Ticket::autoCloseExpiredTickets();
 
         $query = Ticket::with(['mentor', 'itSupport', 'category'])
-            ->where('it_support_id', auth()->id())
             ->whereIn('status', ['Selesai', 'Ditutup']);
 
-        // Filter search
         if ($request->filled('q')) {
             $search = $request->q;
             $query->where(function ($q) use ($search) {
@@ -303,73 +259,31 @@ class TicketController extends Controller
                   ->orWhere('title', 'like', "%{$search}%");
             });
         }
-
-        // Filter kategori
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
-
-        // Filter prioritas
-        if ($request->filled('priority')) {
-            $query->where('priority', $request->priority);
-        }
-
-        // Filter tanggal
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
+        if ($request->filled('category_id')) $query->where('category_id', $request->category_id);
+        if ($request->filled('priority')) $query->where('priority', $request->priority);
+        if ($request->filled('date_from')) $query->whereDate('created_at', '>=', $request->date_from);
+        if ($request->filled('date_to')) $query->whereDate('created_at', '<=', $request->date_to);
 
         $tickets = $query->orderBy('updated_at', 'desc')->get();
+        $filename = 'riwayat-tiket-' . str_replace(' ', '-', auth()->user()->name) . '-' . now()->format('Ymd-His') . '.csv';
 
-        // Nama file
-        $filename = 'riwayat-tiket-' . str_replace(' ', '-', auth()->user()->name)
-                  . '-' . now()->format('Ymd-His') . '.csv';
-
-        // Header response
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-            'Pragma' => 'no-cache',
-            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires' => '0',
         ];
 
-        // Callback untuk stream CSV
         $callback = function () use ($tickets) {
             $file = fopen('php://output', 'w');
-
-            // BOM UTF-8 supaya Excel bisa baca karakter Indonesia
             fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
-
-            // Header kolom
-            fputcsv($file, [
-                'ID Tiket',
-                'Judul Kendala',
-                'Kategori',
-                'Prioritas',
-                'Pelapor',
-                'Status',
-                'Tanggal Dibuat',
-                'Tanggal Selesai',
-            ]);
-
-            // Data
+            fputcsv($file, ['ID Tiket', 'Judul Kendala', 'Kategori', 'Prioritas', 'Pelapor', 'Status', 'Tanggal Dibuat', 'Tanggal Selesai']);
             foreach ($tickets as $t) {
                 fputcsv($file, [
-                    $t->ticket_number,
-                    $t->title,
-                    $t->category->name ?? '-',
-                    $t->priority,
-                    $t->mentor->name ?? '-',
-                    $t->status,
+                    $t->ticket_number, $t->title, $t->category->name ?? '-', $t->priority,
+                    $t->mentor->name ?? '-', $t->status,
                     $t->created_at->format('d/m/Y H:i'),
                     $t->resolved_at ? $t->resolved_at->format('d/m/Y H:i') : '-',
                 ]);
             }
-
             fclose($file);
         };
 
